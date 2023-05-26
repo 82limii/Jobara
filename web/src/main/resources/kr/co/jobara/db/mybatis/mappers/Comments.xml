@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.board.askit.dao.CommentsDAO">
+
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*) FROM COMMENTS
+	</select>
+	
+	<sql id="whereClause">
+		WHERE BOARD_SN = #{detailSearch.boardSn}
+	</sql>
+	
+	<select id="selectReplyList" parameterType="PagingVO" resultType="CommentsVO">
+		SELECT B.*
+		FROM (
+			SELECT A.*, ROWNUM RNUM 
+			FROM (
+				SELECT
+				    COMM_SN,
+				    BOARD_SN,
+				    PMEM_ID,
+				    COMM_DATE,
+				    COMM_CONTENTS
+		 		FROM
+				    COMMENTS
+			<include refid="whereClause" /> 
+			ORDER BY COMM_SN DESC
+			)  A
+		)  B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+
+
+	<insert id="insertReply" parameterType="CommentsVO">
+		<selectKey keyProperty="commSn" resultType="int" order="BEFORE">
+			SELECT NVL(MAX(COMM_SN), 0) + 1 FROM COMMENTS
+		</selectKey>
+			INSERT INTO COMMENTS (
+			    COMM_SN,
+			    BOARD_SN,
+			    PMEM_ID,
+			    COMM_DATE,
+			    COMM_CONTENTS
+			) VALUES (
+			    #{commSn,jdbcType=NUMERIC}
+			    , #{boardSn,jdbcType=NUMERIC}
+			    , #{pmemId,jdbcType=VARCHAR}
+			    , TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			    , #{commContents,jdbcType=CLOB}
+			)
+	</insert>
+	<update id="updateReply" parameterType="CommentsVO">
+		UPDATE COMMENTS
+			SET
+				COMM_CONTENTS = #{commContents }
+			WHERE COMM_SN = #{commSn }
+	</update>
+	
+	<delete id="deleteReply" parameterType="int">
+	 DELETE FROM COMMENTS
+		WHERE
+		COMM_SN = #{commSn}
+	</delete>
+	
+</mapper>

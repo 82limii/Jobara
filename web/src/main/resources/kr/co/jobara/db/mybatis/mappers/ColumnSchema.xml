@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.dao.ColumnSchemaDAO">
+	<sql id="searchFrag">
+		<where>
+			<if test="detailSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.tableName)">
+				INSTR(TABLE_NAME, #{detailSearch.tableName}) > 0
+			</if>
+		</where>
+	</sql>
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM COLS
+		<include refid="searchFrag" />
+	</select>
+	<select id="selectColumnSchemaList" parameterType="PagingVO" resultType="ColumnSchemaVO">
+		WITH SCHEMAS AS (
+			SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE 
+		     , DATA_LENGTH, NULLABLE, DATA_DEFAULT    
+			FROM COLS
+			<include refid="searchFrag" />
+			ORDER BY TABLE_NAME
+		)
+		SELECT *
+		FROM (
+			SELECT ROWNUM RNUM, SCHEMAS.* 
+			FROM SCHEMAS
+		)
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}                               
+	</select>
+	<select id="selectTableNames" resultType="string">
+		SELECT TABLE_NAME
+		FROM USER_TABLES
+	</select>
+</mapper>

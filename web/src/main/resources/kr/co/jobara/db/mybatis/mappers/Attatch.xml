@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.commons.dao.AttatchDAO">
+	<select id="selectNextVal" resultType="string">
+		SELECT
+		    CASE WHEN
+		        SUBSTR(TO_CHAR(MAX(TO_NUMBER(ATT_SN))+1),1,6) = TO_CHAR(SYSDATE, 'YYMMDD')
+		        THEN TO_CHAR(MAX(TO_NUMBER(ATT_SN))+1)
+		    ELSE TO_CHAR(SYSDATE, 'YYMMDD')||'0001'
+		    END
+		FROM ATTATCH
+	</select>
+
+	<insert id="insertAttatches" parameterType="AttatchVO">
+		INSERT INTO ATTATCH (
+		    ATT_SN,
+		    ATT_NUM,
+		    ATT_NM,
+		    ATT_SAVE,
+		    ATT_ROUTE,
+		    ATT_ID,
+		    ATT_DATE,
+		    ATT_MIME,
+		    ATT_SIZE,
+		    ATT_FANCY,
+		    ATT_DOWN
+		) VALUES (
+			  #{attSn,jdbcType=NUMERIC}
+			, #{attNum,jdbcType=NUMERIC}
+			, #{attNm,jdbcType=VARCHAR}
+			, #{attSave,jdbcType=VARCHAR}
+			, #{attRoute,jdbcType=VARCHAR}
+			, #{attId,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{attMime,jdbcType=VARCHAR}
+			, #{attSize,jdbcType=VARCHAR}
+			, #{attFancy,jdbcType=VARCHAR}
+			, #{attDown,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<select id="selectAttatchList" parameterType="string" resultType="AttatchVO">
+		SELECT
+		    ATT_SN, ATT_NUM, ATT_NM,
+		    ATT_SAVE, ATT_ROUTE, ATT_ID,
+		    ATT_DATE, ATT_MIME, ATT_SIZE,
+		    ATT_FANCY, ATT_DOWN
+		FROM
+		    ATTATCH
+		WHERE
+		    ATT_SN = #{attSn}
+	</select>
+	
+	<select id="selectAttatch" parameterType="string" resultType="AttatchVO">
+		SELECT
+		    ATT_SN, ATT_NUM, ATT_NM,
+		    ATT_SAVE, ATT_ROUTE, ATT_ID,
+		    ATT_DATE, ATT_MIME, ATT_SIZE,
+		    ATT_FANCY, ATT_DOWN
+		FROM
+		    ATTATCH
+		WHERE
+		    ATT_SN = #{attSn}
+		    AND ATT_NUM = 1
+	</select>
+	
+</mapper>

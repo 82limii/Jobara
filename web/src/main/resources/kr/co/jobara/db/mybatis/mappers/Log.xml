@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.admin.dao.LogDAO">
+	<select id="selectLogList" resultType="LogVO" parameterType="PagingVO">
+		SELECT B.*
+			FROM (SELECT A.*, ROWNUM RNUM
+			    FROM (SELECT LOG_SN
+						    , PMEM_ID
+						    , EMEM_ID
+						    , LOG_TIME
+						    , LOG_ADD
+						FROM LOG
+			        	ORDER BY LOG_TIME DESC
+			        ) A ) B
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM LOG
+	</select>
+	
+	<insert id="insertLog" parameterType="LogVO">
+		<selectKey resultType="int" keyProperty="logSn" order="BEFORE">
+			SELECT SEQ_LOG.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO LOG (
+		    LOG_SN
+		    <if test="pmemId neq null and pmemId.length gt 0">
+		    , PMEM_ID
+		    </if>
+		    <if test="ememId neq null and ememId.length gt 0">
+		    , EMEM_ID
+		    </if>
+		    , LOG_TIME
+		    , LOG_ADD
+		) VALUES (
+		    #{logSn,jdbcType=NUMERIC}
+		    <if test="pmemId neq null and pmemId.length gt 0">
+			, #{pmemId,jdbcType=VARCHAR}
+			</if>
+		    <if test="ememId neq null and ememId.length gt 0">
+			, #{ememId,jdbcType=VARCHAR}
+			</if>
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			, #{logAdd,jdbcType=VARCHAR}
+		)
+	</insert>
+</mapper>

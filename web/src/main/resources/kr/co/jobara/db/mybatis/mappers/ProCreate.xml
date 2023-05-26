@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.pms.project.dao.ProCreateDAO">
+	
+	<resultMap type="kr.co.jobara.pms.project.vo.CalendarVO"  id="ProCreateMap">
+		<result property="title" column="PRO_NAME"/>
+		<result property="start" column="PRO_STARTD"/>
+		<result property="end" column="PRO_ENDD"/>
+		<result property="id" column="PMEM_ID"/>
+		<result property="sn1" column="PRO_SN"/>
+		<result property="sn2" column="PRO_SN2"/>
+	</resultMap>
+
+	<insert id="insertProject" parameterType="ProCreateVO">
+	<selectKey resultType="int" keyProperty="proSn" order="BEFORE">
+			SELECT NVL(MAX(PRO_SN),0)+1 
+			FROM PRO_CREATE
+	</selectKey>
+		INSERT INTO PRO_CREATE (
+	    	PRO_SN, EMEM_ID, PRO_NAME, 
+	    	PRO_STARTD, PRO_ENDD
+		) VALUES (
+			  #{proSn,jdbcType=NUMERIC}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{proName,jdbcType=VARCHAR}
+			, #{proStartd,jdbcType=DATE}
+			, #{proEndd,jdbcType=DATE}
+		)
+	</insert>
+	
+	<select id="selectProjApplyList" parameterType="string" resultType="ProBoardVO">
+		SELECT PROB_SN ,PROB_TITLE
+		FROM PRO_BOARD
+		WHERE EMEM_ID = #{ememId}
+	</select>
+	
+	<select id="selectApplyMemList" parameterType="int" resultType="ProBoardVO">
+		SELECT
+		    A.PMEM_ID, A.PMEM_NM, A.PMEM_EMAIL, A.PMEM_TEL
+		FROM
+		    P_MEMBER A LEFT OUTER JOIN RESUME B ON(A.PMEM_ID = B.PMEM_ID)
+		    INNER JOIN APPLY C ON(B.RE_SN = C.RE_SN)
+		    INNER JOIN PRO_BOARD D ON(C.PROB_SN = D.PROB_SN)
+		WHERE D.PROB_SN = #{probSn}
+	</select>
+	
+	<select id="selectProjectListCom" parameterType="string" resultMap="ProCreateMap">
+			SELECT 
+				  PRO_SN
+				, PRO_NAME
+				, EMEM_ID
+				, PRO_STARTD
+				, PRO_ENDD
+			FROM PRO_CREATE
+			WHERE EMEM_ID = #{ememId}
+	</select>
+	
+	<select id="selectProjectList" parameterType="string" resultMap="ProCreateMap">
+			SELECT 
+					A.PMEM_ID PMEM_ID
+					, PRO_NAME
+			        , B.PRO_SN PRO_SN
+			        , C.PRO_SN PRO_SN2
+			        , C.PRO_STARTD PRO_STARTD
+			        , C.PRO_ENDD PRO_ENDD
+			FROM P_MEMBER A 
+				INNER JOIN MEMBER B ON (A.PMEM_ID = B.PMEM_ID)
+			    INNER JOIN PRO_CREATE C ON (B.PRO_SN = C.PRO_SN)
+			WHERE A.PMEM_ID = #{pmemId}
+			ORDER BY PRO_STARTD ASC
+	</select>
+	
+	<select id="selectProjListCom" parameterType="String" resultType="ProCreateVO">
+		SELECT
+		    PRO_SN,  EMEM_ID,   PRO_NAME,
+		    PRO_STARTD,  PRO_ENDD
+		FROM
+		    PRO_CREATE
+		WHERE EMEM_ID = #{ememId}
+	
+	</select>
+	
+	
+</mapper>

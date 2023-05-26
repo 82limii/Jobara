@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.comCerti.dao.ComCertiDAO">
+	<select id="selectComCerti" resultType="ComCertiVO" parameterType="int">
+		SELECT COM_CERTI
+			COCE_SN
+			,PMEM_ID
+			,EMEM_ID
+			,COCE_STATE
+			,COCE_DEPT_CD
+			,COCE_EMPTYPE
+			,COCE_CAREER
+			,COCE_AREA
+			,COCE_DATE
+		FROM COM_REVIEW                       
+		WHERE COCE_SN = #{coceSn} 
+	</select>
+	<sql id="searchFrag">
+        <where>
+        	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+        		<choose>
+        			<when test="simpleSearch.searchType eq 'title'">
+        				INSTR(COCE_DATE, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<otherwise>
+        				INSTR(COCE_DATE, #{simpleSearch.searchWord}) > 0
+        			</otherwise>
+        		</choose>
+        	</if>
+        </where>
+	</sql>
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM COM_CERTI
+		<include refid="searchFrag" />
+	</select>
+	
+	
+	<select id="selectComCertiList" parameterType="PagingVO" resultType="ComCertiVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT
+		        	COCE_SN
+					,PMEM_ID
+					,EMEM_ID
+					,COCE_STATE
+					,COCE_DEPT_CD
+					,COCE_EMPTYPE
+					,COCE_CAREER
+					,COCE_AREA
+					,COCE_DATE
+				FROM
+				    COM_CERTI
+		        ]]>
+		        <include refid="searchFrag" />
+                ORDER BY COCE_SN DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	<insert id="insertComCerti" parameterType="ComCertiVO">
+	<selectKey resultType="int" keyProperty="coceSn" order="BEFORE">
+		SELECT SEQ_COM_CERTI.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO COM_CERTI (
+		    COCE_SN
+			,PMEM_ID
+			,EMEM_ID
+			,COCE_STATE
+			,COCE_DEPT_CD
+			,COCE_EMPTYPE
+			,COCE_CAREER
+			,COCE_AREA
+			,COCE_DATE
+		) VALUES (
+			#{coceSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{coceState,jdbcType=VARCHAR}
+			, #{coceDeptCd,jdbcType=VARCHAR}
+			, #{coceEmptype,jdbcType=VARCHAR}
+			, #{coceCareer,jdbcType=VARCHAR}
+			, #{coceArea,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		)   
+	</insert>
+</mapper>

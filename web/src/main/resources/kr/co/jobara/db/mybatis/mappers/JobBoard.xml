@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.jobboard.dao.JobBoardDAO">
+
+	<insert id="insertJobBoard" parameterType="JobBoardVO">
+		<selectKey resultType="int" keyProperty="jobSn" order="BEFORE">
+			SELECT SEQ_JOBBOARD.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO JOB_BOARD (
+		    JOB_SN
+		    , EMEM_ID
+		    , JOB_TITLE
+		    , JOB_EDU_CD
+		    , JOB_CAR_CD
+		    <if test="jobPref neq null and jobPref.length gt 0">
+		    , JOB_PREF
+		    </if>
+		    , JOB_EMP_CD
+		    , JOB_PAY
+		    , JOB_LOC_CD
+		    <if test="jobTime neq null and jobTime.length gt 0">
+		    , JOB_TIME
+		    </if>
+		    <if test="jobPosiCd neq null and jobPosiCd.length gt 0">
+		    , JOB_POSI_CD
+		    </if>
+		    <if test="jobDeptCd neq null and jobDeptCd.length gt 0">
+		    , JOB_DEPT_CD
+		    </if>
+		    , JOB_DETAIL
+		    , JOB_STARTD
+		    , JOB_ENDD
+		    <if test="jobPage neq null and jobPage.length gt 0">
+		    , JOB_PAGE
+		    </if>
+		    <if test="attSn neq null and attSn gt 0">
+		    , ATT_SN
+		    </if>
+		    , JOB_WAY
+		    , JOB_SKILL
+		    , JOB_DATE
+		) VALUES (
+		    #{jobSn,jdbcType=NUMERIC}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{jobTitle,jdbcType=VARCHAR}
+			, #{jobEduCd,jdbcType=VARCHAR}
+			, #{jobCarCd,jdbcType=VARCHAR}
+		    <if test="jobPref neq null and jobPref.length gt 0">
+			, #{jobPref,jdbcType=VARCHAR}
+			</if>
+			, #{jobEmpCd,jdbcType=VARCHAR}
+			, #{jobPay,jdbcType=VARCHAR}
+			, #{jobLocCd,jdbcType=VARCHAR}
+		    <if test="jobTime neq null and jobTime.length gt 0">
+			, #{jobTime,jdbcType=VARCHAR}
+			</if>
+		    <if test="jobPosiCd neq null and jobPosiCd.length gt 0">
+			, #{jobPosiCd,jdbcType=VARCHAR}
+			</if>
+		    <if test="jobDeptCd neq null and jobDeptCd.length gt 0">
+			, #{jobDeptCd,jdbcType=VARCHAR}
+			</if>
+			, #{jobDetail,jdbcType=VARCHAR}
+			, #{jobStartd,jdbcType=VARCHAR}
+			, #{jobEndd,jdbcType=VARCHAR}
+		    <if test="jobPage neq null and jobPage.length gt 0">
+			, #{jobPage,jdbcType=VARCHAR}
+			</if>
+		    <if test="attSn neq null and attSn gt 0">
+			, #{attSn,jdbcType=NUMERIC}
+			</if>
+			, #{jobWay,jdbcType=VARCHAR}
+			, #{jobSkill,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		)
+	</insert>
+	
+	<select id="selectJobBoardList" parameterType="PagingVO" resultType="JobBoardVO">
+		SELECT B.*
+		FROM (SELECT A.*, ROWNUM RNUM
+		    FROM (SELECT
+		            JOB_SN,
+		            G.EMEM_ID, G.EMEM_NM,
+		            JOB_TITLE,
+		            JOB_EDU_CD, A.COMM_NM JOB_EDU,
+		            JOB_CAR_CD, B.COMM_NM JOB_CAR,
+		            JOB_PREF,
+		            JOB_EMP_CD, C.COMM_NM JOB_EMP,
+		            JOB_PAY,
+		            JOB_LOC_CD, D.LOC_CITY_NM JOB_LOC,
+		            JOB_TIME,
+		            JOB_POSI_CD, E.COMM_NM JOB_POSI,
+		            JOB_DEPT_CD, F.COMM_NM JOB_DEPT,
+		            JOB_DETAIL, JOB_STARTD, JOB_ENDD,
+		            JOB_PAGE, ATT_SN, JOB_WAY,
+		            JOB_SKILL, JOB_DATE
+		        FROM JOB_BOARD
+		            LEFT OUTER JOIN COMMON_MIDDLE A
+		                ON JOB_BOARD.JOB_EDU_CD = A.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE B
+		                ON JOB_BOARD.JOB_CAR_CD = B.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE C
+		                ON JOB_BOARD.JOB_EMP_CD = C.COMM_CD
+		            LEFT OUTER JOIN LOCATION D
+		                ON JOB_BOARD.JOB_LOC_CD = D.LOC_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE E
+		                ON JOB_BOARD.JOB_POSI_CD = E.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE F
+		                ON JOB_BOARD.JOB_DEPT_CD = F.COMM_CD
+		            INNER JOIN E_MEMBER G
+		                ON JOB_BOARD.EMEM_ID = G.EMEM_ID
+		        <include refid="searchFrag" />
+		        <choose>
+		        	<when test="detailSearch.jobOrder eq 'jobEnd'">
+		        	ORDER BY JOB_ENDD
+		        	</when>
+		        	<when test="detailSearch.jobOrder eq 'jobStart'">
+		        	ORDER BY JOB_STARTD
+		        	</when>
+		        	<otherwise>
+		        	ORDER BY JOB_DATE DESC
+		        	</otherwise>
+		        </choose>
+		        ) A ) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<sql id="searchFrag">
+		<trim prefix=" WHERE " prefixOverrides="AND">
+			<if test="detailSearch neq null">
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.pageDiv)">
+					JOB_ENDD >= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.jobEduCd)">
+					AND JOB_EDU_CD = #{detailSearch.jobEduCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.jobCarCd)">
+					AND JOB_CAR_CD = #{detailSearch.jobCarCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.jobLocCd) and detailSearch.jobLocCd neq '00'">
+					AND JOB_LOC_CD LIKE #{detailSearch.jobLocCd}||'%'
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.jobDeptCd)">
+					AND JOB_DEPT_CD = #{detailSearch.jobDeptCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.jobSkill)">
+					AND INSTR(JOB_SKILL, #{detailSearch.jobSkill}) > 0
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.ememNm)">
+					AND INSTR(EMEM_NM, #{detailSearch.ememNm}) > 0
+				</if>
+			</if>
+		</trim>
+	</sql>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM JOB_BOARD
+			LEFT OUTER JOIN E_MEMBER ON JOB_BOARD.EMEM_ID = E_MEMBER.EMEM_ID
+        <include refid="searchFrag" />
+	</select>
+	
+	<select id="selectJobBoard" resultType="JobBoardVO" parameterType="int">
+		SELECT
+		    JOB_SN,
+		    A.EMEM_ID, EMEM_NM, EMEM_PIC,
+		    COM_HEADCNT, COM_BUSSINESS,
+		    JOB_TITLE,
+		    JOB_EDU_CD, C.COMM_NM JOB_EDU, 
+		    JOB_CAR_CD, D.COMM_NM JOB_CAR,
+		    JOB_PREF,
+		    JOB_EMP_CD, E.COMM_NM JOB_EMP,
+		    JOB_PAY,
+		    JOB_LOC_CD, F.LOC_CITY_NM JOB_CITY, F.LOC_NM JOB_LOC,
+		    JOB_TIME,
+		    JOB_POSI_CD, G.COMM_NM JOB_POSI,
+		    JOB_DEPT_CD, H.COMM_NM JOB_DEPT,
+		    JOB_DETAIL, JOB_STARTD, JOB_ENDD,
+		    JOB_PAGE, ATT_SN, JOB_WAY,
+		    JOB_SKILL, JOB_DATE, JOB_EDIT
+		FROM JOB_BOARD 
+		    LEFT OUTER JOIN E_MEMBER A ON (JOB_BOARD.EMEM_ID = A.EMEM_ID)
+		    LEFT OUTER JOIN COM_INFO B ON (JOB_BOARD.EMEM_ID = B.EMEM_ID)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (JOB_BOARD.JOB_EDU_CD = C.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE D ON (JOB_BOARD.JOB_CAR_CD = D.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE E ON (JOB_BOARD.JOB_EMP_CD = E.COMM_CD)
+		    LEFT OUTER JOIN LOCATION F ON (JOB_BOARD.JOB_LOC_CD = F.LOC_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE G ON (JOB_BOARD.JOB_POSI_CD = G.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE H ON (JOB_BOARD.JOB_DEPT_CD = H.COMM_CD)
+		WHERE JOB_SN = #{jobSn}
+	</select>
+	
+	<select id="selectMyJobBoard" parameterType="PagingVO" resultType="JobBoardVO">
+		SELECT B.*
+		FROM (SELECT A.*, ROWNUM RNUM
+		    FROM (SELECT
+		            JOB_SN,
+		            G.EMEM_ID, G.EMEM_NM,
+		            JOB_TITLE,
+		            JOB_EDU_CD, A.COMM_NM JOB_EDU,
+		            JOB_CAR_CD, B.COMM_NM JOB_CAR,
+		            JOB_PREF,
+		            JOB_EMP_CD, C.COMM_NM JOB_EMP,
+		            JOB_PAY,
+		            JOB_LOC_CD, D.LOC_CITY_NM JOB_LOC,
+		            JOB_TIME,
+		            JOB_POSI_CD, E.COMM_NM JOB_POSI,
+		            JOB_DEPT_CD, F.COMM_NM JOB_DEPT,
+		            JOB_DETAIL, JOB_STARTD, JOB_ENDD,
+		            JOB_PAGE, ATT_SN, JOB_WAY,
+		            JOB_SKILL, JOB_DATE
+		        FROM JOB_BOARD
+		            LEFT OUTER JOIN COMMON_MIDDLE A
+		                ON JOB_BOARD.JOB_EDU_CD = A.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE B
+		                ON JOB_BOARD.JOB_CAR_CD = B.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE C
+		                ON JOB_BOARD.JOB_EMP_CD = C.COMM_CD
+		            LEFT OUTER JOIN LOCATION D
+		                ON JOB_BOARD.JOB_LOC_CD = D.LOC_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE E
+		                ON JOB_BOARD.JOB_POSI_CD = E.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE F
+		                ON JOB_BOARD.JOB_DEPT_CD = F.COMM_CD
+		            INNER JOIN E_MEMBER G
+		                ON JOB_BOARD.EMEM_ID = G.EMEM_ID
+		        	WHERE JOB_BOARD.EMEM_ID = #{detailSearch.ememId}
+		        	ORDER BY JOB_DATE DESC
+		        ) A ) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectMyTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM JOB_BOARD
+        WHERE EMEM_ID = #{detailSearch.ememId}
+	</select>
+	
+	<update id="updateJobBoard" parameterType="JobBoardVO">
+		UPDATE JOB_BOARD
+		SET
+		    JOB_TITLE = #{jobTitle,jdbcType=VARCHAR}
+		    , JOB_EDU_CD = #{jobEduCd,jdbcType=VARCHAR}
+		    , JOB_CAR_CD = #{jobCarCd,jdbcType=VARCHAR}
+		    , JOB_PREF = #{jobPref,jdbcType=VARCHAR}
+		    , JOB_EMP_CD = #{jobEmpCd,jdbcType=VARCHAR}
+		    , JOB_PAY = #{jobPay,jdbcType=VARCHAR}
+		    , JOB_LOC_CD = #{jobLocCd,jdbcType=VARCHAR}
+		    , JOB_TIME = #{jobTime,jdbcType=VARCHAR}
+		    , JOB_POSI_CD = #{jobPosiCd,jdbcType=VARCHAR}
+		    , JOB_DEPT_CD = #{jobDeptCd,jdbcType=VARCHAR}
+		    , JOB_DETAIL = #{jobDetail,jdbcType=VARCHAR}
+		    , JOB_STARTD = #{jobStartd,jdbcType=VARCHAR}
+		    , JOB_ENDD = #{jobEndd,jdbcType=VARCHAR}
+		    , JOB_PAGE = #{jobPage,jdbcType=VARCHAR}
+		    <if test="attSn neq null and attSn.length gt 0">
+		    , ATT_SN = #{attSn,jdbcType=VARCHAR}
+		    </if>
+		    , JOB_WAY = #{jobWay,jdbcType=VARCHAR}
+		    <if test="jobSkill neq null and jobSkill.length gt 0">
+		    , JOB_SKILL = #{jobSkill,jdbcType=VARCHAR}
+		    </if>
+		    , JOB_EDIT = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		WHERE JOB_SN = #{jobSn}
+	</update>
+</mapper>

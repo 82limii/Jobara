@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.pms.project.dao.ProNoticeDAO">
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM NOTI
+	</select>
+	
+	<select id="selectNotice" parameterType="int" resultType="ProNoticeVO">
+		SELECT
+		    A.NOTI_SN,  A.PRO_SN,   A.NOTI_TITLE, A.PMEM_ID,
+		    A.NOTI_CONTENTS,  A.NOTI_DATE,  A.NOTI_IMPORTANCE, A.ATT_SN, B.PMEM_NM
+		FROM NOTI A
+		    LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+		WHERE NOTI_SN = #{notiSn}
+	</select>
+	
+	
+	<select id="selectNoticeList" parameterType="PagingVO" resultType="ProNoticeVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	SELECT
+				    NOTI_SN,  PRO_SN,  NOTI_TITLE,
+				    NOTI_CONTENTS,  NOTI_DATE,  NOTI_IMPORTANCE
+				FROM NOTI
+				WHERE PRO_SN = #{detailSearch.proSn }
+				ORDER BY 1 DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+		
+	</select>
+	
+	<insert id="insertNotice" parameterType="ProNoticeVO">
+		<selectKey resultType="int" keyProperty="notiSn" order="BEFORE">
+			SELECT NVL(MAX(NOTI_SN),0)+1 
+			FROM NOTI
+		</selectKey>
+		INSERT INTO NOTI (
+		    NOTI_SN
+		    , PRO_SN
+		    , NOTI_TITLE
+		    , NOTI_CONTENTS
+		    , NOTI_IMPORTANCE
+		    , NOTI_DATE
+		    , PMEM_ID
+			<if test="attSn neq null and attSn.length gt 0">
+		    , ATT_SN
+			</if>
+		) VALUES (
+		   	#{notiSn,jdbcType=NUMERIC}
+			, #{proSn,jdbcType=NUMERIC}
+			, #{notiTitle,jdbcType=VARCHAR}
+			, #{notiContents,jdbcType=VARCHAR}
+			, #{notiImportance,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{pmemId,jdbcType=VARCHAR}
+			<if test="attSn neq null and attSn.length gt 0">
+			, #{attSn,jdbcType=VARCHAR}
+			</if>
+		)
+	</insert>
+	
+	<update id="updateNotice" parameterType="ProNoticeVO">
+			UPDATE NOTI
+  	  	SET
+		    NOTI_TITLE= #{notiTitle,jdbcType=VARCHAR}
+		    , NOTI_CONTENTS= #{notiContents,jdbcType=VARCHAR}
+		    , NOTI_EDIT = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		<if test="notiImportance neq null and notiImportance.length gt 0">
+		    , NOTI_IMPORTANCE= #{notiImportance,jdbcType=VARCHAR}
+		</if>
+		<if test="attSn neq null and attSn.length gt 0">
+		    , ATT_SN = #{attSn,jdbcType=VARCHAR}
+		</if>
+		WHERE
+		      NOTI_SN= #{notiSn}
+	</update>
+
+</mapper>
+
+
+
+
+
+

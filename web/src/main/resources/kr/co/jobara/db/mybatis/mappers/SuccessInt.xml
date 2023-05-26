@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.successint.dao.SuccessIntDAO">
+	
+	
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM SUCCESS_INT
+		WHERE
+			EMEM_ID = #{detailSearch.ememId}
+	</select>
+	
+	<select id="selectSuccessIntList" parameterType="PagingVO" resultType="SuccessIntVO">
+		WITH SUCCESS_INTORDER AS (
+			SELECT 
+				SIN_SN
+				, CERTI_SN
+				, PMEM_ID
+				, EMEM_ID
+				, SIN_TITLE
+				, SIN_CONTEN
+				, SIN_DATE
+				, SIN_SDATE
+				, SIN_DDATE               
+			FROM SUCCESS_INT
+			WHERE
+				SIN_DDATE IS NULL
+			AND 
+				EMEM_ID = #{detailSearch.ememId}
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT SUCCESS_INTORDER.*, ROWNUM RNUM
+			FROM SUCCESS_INTORDER
+		) A
+	</select>
+	
+	<select id="selectSuccessInt" parameterType="int" resultType="SuccessIntVO" >
+		SELECT
+		    SIN_SN
+		    , CERTI_SN
+		    , PMEM_ID
+		    , EMEM_ID
+		    , SIN_TITLE
+		    , SIN_CONTEN
+		    , SIN_DATE
+		    , SIN_SDATE
+		FROM
+		    SUCCESS_INT
+		WHERE SIN_SN = #{sinSn}
+	</select>
+	
+	<insert id="insertSuccessInt" parameterType="SuccessIntVO">
+	<selectKey resultType="int" keyProperty="sinSn" order="BEFORE">
+		SELECT SEQ_SUCCESS_INT.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO SUCCESS_INT (
+		    SIN_SN
+			, CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, SIN_TITLE
+			, SIN_CONTEN
+			, SIN_DATE
+			, SIN_SDATE
+		) VALUES (
+			#{sinSn,jdbcType=NUMERIC}
+			, #{certiSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{sinTitle,jdbcType=VARCHAR}
+			, #{sinConten,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+			, #{sinSdate,jdbcType=VARCHAR}
+
+		)
+	</insert>
+	
+	<update id="deleteSuccessInt" parameterType="int" >
+		UPDATE SUCCESS_INT
+		SET
+			SIN_DDATE = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		WHERE SIN_SN = #{sinSn}
+	</update>
+	
+</mapper>

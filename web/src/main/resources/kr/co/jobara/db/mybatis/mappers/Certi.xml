@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.certi.dao.CertiDAO">
+	
+	<sql id="searchFrag">
+        <where>
+        <!-- EMEM_ID = #{ememId} -->
+        </where>
+	</sql>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM CERTI
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectCertiList" parameterType="PagingVO" resultType="CertiVO">
+		WITH CERTIORDER AS (
+			SELECT 
+				CERTI_SN
+				, PMEM_ID
+				, EMEM_ID
+				, CERTI_STATE
+				, CERTI_NM
+				, CERTI_FILE
+				, CERTI_DIVI_CD                
+			FROM CERTI
+			<include refid="searchFrag" />
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT CERTIORDER.*, ROWNUM RNUM
+			FROM CERTIORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectCerti" parameterType="int" resultType="CertiVO" >
+		SELECT
+		    CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, CERTI_STATE
+			, CERTI_NM
+			, CERTI_FILE
+			, CERTI_DIVI_CD 
+		FROM
+		    CERTI
+		WHERE CERTI_SN = #{certiSn}
+	</select>
+	
+	<insert id="insertCerti" parameterType="CertiVO">
+	<selectKey resultType="int" keyProperty="certiSn" order="BEFORE">
+		SELECT SEQ_CERTI.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO CERTI (
+		    CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, CERTI_STATE
+			, CERTI_NM
+			, CERTI_FILE
+			, CERTI_DIVI_CD 
+		) VALUES (
+			#{certiSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{certiState,jdbcType=VARCHAR}
+			, #{certiNm,jdbcType=VARCHAR}
+			, #{certiFile,jdbcType=VARCHAR}
+			, #{certiDiviCd,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

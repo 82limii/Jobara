@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.apply.dao.ApplyDAO">
+	<insert id="insertApply" parameterType="ApplyVO">
+		<selectKey resultType="int" keyProperty="appSn" order="BEFORE">
+			SELECT SEQ_APPLY.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO APPLY (
+		    APP_SN
+		    <if test="jobSn neq null and jobSn gt 0">
+		    , JOB_SN
+		    </if>
+		    <if test="probSn neq null and probSn gt 0">
+		    , PROB_SN
+		    </if>
+		    , RE_SN
+		    , APP_DATE
+		) VALUES (
+		    #{appSn,jdbcType=NUMERIC}
+		    <if test="jobSn neq null and jobSn gt 0">
+		    , #{jobSn,jdbcType=NUMERIC}
+		    </if>
+		    <if test="probSn neq null and probSn gt 0">
+		    , #{probSn,jdbcType=NUMERIC}
+		    </if>
+		    , #{reSn,jdbcType=NUMERIC}
+		    , TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		)
+	</insert>
+	
+	<sql id="searchFrag">
+		<where>
+			<if test="simpleSearch  neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+				<choose>
+					<when test="simpleSearch.searchType eq 'name'">
+						EMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+					</when>
+					<when test="simpleSearch.searchType eq 'address'">
+						INSTR(EMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</when>
+					<otherwise>
+						EMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+						OR
+						INSTR(EMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</sql>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM APPLY
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectJobList" resultType="ApplyVO">
+		WITH APPLYORDER AS (
+			SELECT ROWNUM, APP_SN, A.RE_SN, C.JOB_SN, C.JOB_TITLE, APP_DATE, RE_TITLE
+			FROM APPLY A 
+			    LEFT OUTER JOIN RESUME B ON (A.RE_SN = B.RE_SN)
+			    LEFT OUTER JOIN JOB_BOARD C ON (A.JOB_SN = C.JOB_SN)
+			WHERE B.PMEM_ID = #{pmemId}
+			    AND C.JOB_SN IS NOT NULL
+			<include refid="searchFrag" />    
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLYORDER.*, ROWNUM RNUM
+			FROM APPLYORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+		    
+		   
+	</select>
+	
+	<select id="selectProList" resultType="ApplyVO">
+		WITH APPLYORDER AS (
+			SELECT APP_SN, A.RE_SN, C.PROB_SN, C.PROB_TITLE, APP_DATE, RE_TITLE
+			FROM APPLY A 
+			    LEFT OUTER JOIN RESUME B ON (A.RE_SN = B.RE_SN)
+			    LEFT OUTER JOIN PRO_BOARD C ON (A.PROB_SN = C.PROB_SN)
+			WHERE B.PMEM_ID = #{pmemId}
+			    AND C.PROB_SN IS NOT NULL
+			<include refid="searchFrag" />    
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLYORDER.*, ROWNUM RNUM
+			FROM APPLYORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+		    
+		   
+	</select>
+	
+</mapper>

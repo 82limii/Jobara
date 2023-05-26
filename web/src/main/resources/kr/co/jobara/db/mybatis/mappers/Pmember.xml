@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.member.dao.PmemberDAO">
+
+	<!-- 장인슬 -->
+	<select id="findIdPmem" resultType="PmemberVO">
+		SELECT PMEM_NM, PMEM_EMAIL, PMEM_ID
+		FROM P_MEMBER 
+		WHERE PMEM_NM = #{pmemNm} AND PMEM_EMAIL = #{pmemEmail}
+	</select>
+	
+	<select id="findPwPmem" resultType="PmemberVO">
+		SELECT PMEM_ID, PMEM_NM, PMEM_TEL, PMEM_PASS
+		FROM P_MEMBER 
+		WHERE PMEM_ID=#{pmemId} AND PMEM_NM = #{pmemNm} AND PMEM_TEL=#{pmemTel}
+	</select>
+	
+	<update id="updatePassPmem">
+		UPDATE P_MEMBER
+		SET PMEM_PASS = #{pmemPass}
+		WHERE PMEM_ID = #{pmemId}
+	
+	</update>
+
+	<select id="selectPmemberForAuth" resultType="PmemberVO" parameterType="string">
+		SELECT PMEM_ID, PMEM_PASS, PMEM_NM, PMEM_PIC, PMEM_ROLE
+		FROM P_MEMBER                       
+		WHERE PMEM_ID = #{pmemId}
+	</select>
+	
+	<sql id="searchFrag">
+		<where>
+			<if test="simpleSearch  neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+				<choose>
+					<when test="simpleSearch.searchType eq 'name'">
+						PMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+					</when>
+					<when test="simpleSearch.searchType eq 'address'">
+						INSTR(PMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</when>
+					<otherwise>
+						PMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+						OR
+						INSTR(PMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</sql>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM P_MEMBER
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectPmemberList" resultType="PmemberVO">
+		WITH P_MEMBERORDER AS (
+			SELECT ROWID RID
+					    ,PMEM_ID
+	                    ,PMEM_NM
+	                    ,PMEM_BIR
+	                    ,PMEM_TEL
+	                    ,PMEM_BADD
+	                    ,PMEM_EMAIL                  
+			FROM P_MEMBER
+			<include refid="searchFrag" />
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT P_MEMBERORDER.*, ROWNUM RNUM
+			FROM P_MEMBERORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+<!-- 	<resultMap type="PmemberVO" id="pmemberMap" autoMapping="true"> -->
+<!-- 		<id property="pmemId" column="PMEM_ID"/> -->
+<!-- 	</resultMap> -->
+	
+	<select id="selectPmember" parameterType="string" resultType="PmemberVO">
+		SELECT PMEM_ID, PMEM_PASS, PMEM_NM, PMEM_BIR
+		        ,PMEM_TEL, PMEM_ZIP, PMEM_BADD
+		        ,PMEM_DADD, PMEM_EMAIL, EMP_STATE_CD
+		        ,PMEM_SKILL, PMEM_EXPDATE, PMEM_SEX
+		        ,PMEM_PIC, COMM_NM PMEM_SEX_NM   
+		FROM  P_MEMBER A LEFT OUTER JOIN COMMON_MIDDLE B ON (A.PMEM_SEX = B.COMM_CD)                                                   
+		WHERE PMEM_ID = #{pmemId}
+	</select>
+	
+	<insert id="insertPmember" parameterType="PmemberVO">
+		INSERT INTO P_MEMBER (
+		    PMEM_ID, PMEM_PASS, PMEM_NM, PMEM_BIR
+		        ,PMEM_TEL, PMEM_ZIP, PMEM_BADD
+		        ,PMEM_DADD, PMEM_EMAIL, EMP_STATE_CD
+		        ,PMEM_SKILL, PMEM_SEX
+		    	<if test="pmemPic neq null and pmemPic.length gt 0">
+		    	, PMEM_PIC
+		   	 	</if>
+		    	, PMEM_ROLE
+		) VALUES (
+		   #{pmemId,jdbcType=VARCHAR}
+			, #{pmemPass,jdbcType=VARCHAR}
+			, #{pmemNm,jdbcType=VARCHAR}
+			, #{pmemBir,jdbcType=VARCHAR}
+			, #{pmemTel,jdbcType=VARCHAR}
+			, #{pmemZip,jdbcType=VARCHAR}
+			, #{pmemBadd,jdbcType=VARCHAR}
+			, #{pmemDadd,jdbcType=VARCHAR}
+			, #{pmemEmail,jdbcType=VARCHAR}
+			, #{empStateCd,jdbcType=VARCHAR}
+			, #{pmemSkill,jdbcType=VARCHAR}
+			, #{pmemSex,jdbcType=VARCHAR}
+			<if test="pmemPic neq null and pmemPic.length gt 0">
+			, #{pmemPic,jdbcType=VARCHAR}
+			</if>
+			, 'ROLE_USER'
+		)   
+	</insert>
+	
+	<insert id="insertEmpInfo" parameterType="PmemberVO">
+	<selectKey resultType="int" keyProperty="empSn" order="BEFORE">
+		SELECT SEQ_EMP_INFO.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO EMP_INFO (
+			EMP_SN
+			,PMEM_ID
+			,EMP_STATE_CD
+			,EMEM_ID
+			,EMP_STARTD
+			,EMP_POSI_CD
+			,EMP_DEPT_CD
+			,EMP_SALARY
+		) VALUES (
+			#{empSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{empStateCd,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{empStartd,jdbcType=VARCHAR}
+			, #{empPosiCd,jdbcType=VARCHAR}
+			, #{empDeptCd,jdbcType=VARCHAR}
+			, #{empSalary,jdbcType=VARCHAR}
+		)   
+	</insert>
+	
+	<update id="updatePmember" parameterType="PmemberVO">
+		UPDATE P_MEMBER
+		SET   PMEM_TEL= #{pmemTel,jdbcType=VARCHAR}
+			, PMEM_ZIP= #{pmemZip,jdbcType=VARCHAR}
+			, PMEM_BADD= #{pmemBadd,jdbcType=VARCHAR}
+			, PMEM_DADD= #{pmemDadd,jdbcType=VARCHAR}
+			, PMEM_EMAIL= #{pmemEmail,jdbcType=VARCHAR}
+			, EMP_STATE_CD= #{empStateCd,jdbcType=VARCHAR}
+			<if test="pmemSkill neq null and pmemSkill.length gt 0">
+			, PMEM_SKILL= #{pmemSkill,jdbcType=VARCHAR}
+			</if>
+			<if test="pmemPic neq null and pmemPic.length gt 0">
+			, PMEM_PIC= #{pmemPic,jdbcType=VARCHAR}
+			</if>
+		WHERE PMEM_ID = #{pmemId,jdbcType=VARCHAR}
+	</update>
+</mapper>

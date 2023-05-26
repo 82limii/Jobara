@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.pms.project.dao.ReportDAO">
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM REPORT
+	</select>
+	<select id="selectReportList" parameterType="PagingVO" resultType="ReportVO">
+	 SELECT B.*
+			FROM (
+			SELECT A.*, ROWNUM RNUM
+			FROM(
+				SELECT
+				    REPO_SN,   PRO_SN,   PMEM_ID,
+				    REPO_TITLE, REPO_CONTENTS, REPO_DATE,  REPO_EDIT
+				FROM
+				    REPORT
+				WHERE PRO_SN = #{detailSearch.proSn }
+				ORDER BY REPO_SN DESC
+	       ) A
+		) B
+		<![CDATA[
+		    WHERE RNUM >= #{startRow} AND RNUM <= #{endRow} 
+		 ]]>
+	</select>
+	
+	<select id="selectReport" parameterType="int" resultType="ReportVO">
+		SELECT
+		    REPO_SN,   PRO_SN,   PMEM_ID,
+		    REPO_TITLE, REPO_CONTENTS, REPO_DATE,  REPO_EDIT, ATT_SN
+		FROM
+		    REPORT
+		WHERE REPO_SN = #{repoSn}
+	</select>
+	
+	<insert id="insertReport" parameterType="ReportVO">
+		<selectKey resultType="int" keyProperty="repoSn" order="BEFORE">
+			SELECT NVL(MAX(REPO_SN),0)+1 
+			FROM REPORT
+		</selectKey>
+		INSERT INTO report (
+		    REPO_SN,  PRO_SN,  PMEM_ID, REPO_TITLE,
+		    REPO_CONTENTS,  REPO_DATE
+		    <if test="attSn neq null and attSn.length gt 0">
+		    , ATT_SN
+		    </if>
+		) VALUES (
+		  #{repoSn,jdbcType=NUMERIC}
+		, #{proSn,jdbcType=NUMERIC}
+		, #{pmemId,jdbcType=VARCHAR}
+		, #{repoTitle,jdbcType=VARCHAR}
+		, #{repoContents,jdbcType=VARCHAR}
+		, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		<if test="attSn neq null and attSn.length gt 0">
+		, #{attSn,jdbcType=VARCHAR}
+		</if>
+		)
+	</insert>
+	
+	<update id="updateReport" parameterType="ReportVO">
+		UPDATE REPORT
+		    SET
+		        REPO_TITLE= #{repoTitle,jdbcType=VARCHAR}
+		        , REPO_CONTENTS= #{repoContents,jdbcType=VARCHAR}
+		        , REPO_EDIT= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		        <if test="attSn neq null and attSn.length gt 0">
+			    , ATT_SN = #{attSn,jdbcType=VARCHAR}
+			    </if>
+		WHERE
+		    REPO_SN = #{repoSn}
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.proboard.dao.ProBoardDAO">
+	<select id="selectProBoardList" parameterType="PagingVO" resultType="ProBoardVO">
+		SELECT B.*
+		FROM (SELECT A.*, ROWNUM RNUM
+		    FROM (SELECT
+		            PROB_SN,
+		            G.EMEM_ID, G.EMEM_NM,
+		            PROB_TITLE,
+		            PROB_EDU_CD, A.COMM_NM PROB_EDU,
+		            PROB_CAR_CD, B.COMM_NM PROB_CAR,
+		            PROB_PREF,
+		            PROB_PAY,
+		            PROB_LOC_CD, D.LOC_CITY_NM PROB_LOC,
+		            PROB_POSI_CD, E.COMM_NM PROB_POSI,
+		            PROB_DEPT_CD, F.COMM_NM PROB_DEPT,
+		            PROB_DETAIL, PROB_STARTD, PROB_ENDD,
+		            PROB_RSTARTD, PROB_RENDD,
+		            PROB_PAGE, ATT_SN, PROB_WAY,
+		            PROB_SKILL, PROB_DATE
+		        FROM PRO_BOARD
+		            LEFT OUTER JOIN COMMON_MIDDLE A
+		                ON PRO_BOARD.PROB_EDU_CD = A.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE B
+		                ON PRO_BOARD.PROB_CAR_CD = B.COMM_CD
+		            LEFT OUTER JOIN LOCATION D
+		                ON PRO_BOARD.PROB_LOC_CD = D.LOC_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE E
+		                ON PRO_BOARD.PROB_POSI_CD = E.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE F
+		                ON PRO_BOARD.PROB_DEPT_CD = F.COMM_CD
+		            INNER JOIN E_MEMBER G
+		                ON PRO_BOARD.EMEM_ID = G.EMEM_ID
+		        <include refid="searchFrag" />
+		        <choose>
+		            <when test="detailSearch.proOrder eq 'proRend'">
+		            ORDER BY PROB_RENDD
+		            </when>
+		            <when test="detailSearch.proOrder eq 'proRstart'">
+		            ORDER BY PROB_RSTARTD
+		            </when>
+		            <when test="detailSearch.proOrder eq 'proEnd'">
+		            ORDER BY PROB_ENDD
+		            </when>
+		            <when test="detailSearch.proOrder eq 'proStart'">
+		            ORDER BY PROB_STARTD
+		            </when>
+		            <otherwise>
+		            ORDER BY PROB_DATE DESC
+		            </otherwise>
+		        </choose>
+		        ) A ) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PRO_BOARD
+		    LEFT OUTER JOIN E_MEMBER ON PRO_BOARD.EMEM_ID = E_MEMBER.EMEM_ID
+	    <include refid="searchFrag" />
+	</select>
+	
+	<sql id="searchFrag">
+		<trim prefix=" WHERE " prefixOverrides="AND">
+			<if test="detailSearch neq null">
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.pageDiv)">
+					PROB_RENDD >= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.probEduCd)">
+					AND PROB_EDU_CD = #{detailSearch.probEduCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.probCarCd)">
+					AND PROB_CAR_CD = #{detailSearch.probCarCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.probLocCd) and detailSearch.probLocCd neq '00'">
+					AND PROB_LOC_CD LIKE #{detailSearch.probLocCd}||'%'
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.probDeptCd)">
+					AND PROB_DEPT_CD = #{detailSearch.probDeptCd}
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.probSkill)">
+					AND INSTR(PROB_SKILL, #{detailSearch.probSkill}) > 0
+				</if>
+				<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(detailSearch.ememNm)">
+					AND INSTR(EMEM_NM, #{detailSearch.ememNm}) > 0
+				</if>
+			</if>
+		</trim>
+	</sql>
+	
+	<select id="selectProBoard" parameterType="int" resultType="ProBoardVO">
+		SELECT
+		    PROB_SN,
+		    A.EMEM_ID, EMEM_NM, EMEM_PIC,
+		    COM_HEADCNT, COM_BUSSINESS,
+		    PROB_TITLE,
+		    PROB_EDU_CD, C.COMM_NM PROB_EDU, 
+		    PROB_CAR_CD, D.COMM_NM PROB_CAR,
+		    PROB_PREF,
+		    PROB_PAY,
+		    PROB_LOC_CD, F.LOC_CITY_NM PROB_CITY, F.LOC_NM PROB_LOC,
+		    PROB_STARTD, PROB_ENDD,
+		    PROB_POSI_CD, G.COMM_NM PROB_POSI,
+		    PROB_DEPT_CD, H.COMM_NM PROB_DEPT,
+		    PROB_DETAIL, PROB_RSTARTD, PROB_RENDD,
+		    PROB_PAGE, ATT_SN, PROB_WAY,
+		    PROB_SKILL, PROB_DATE, PROB_EDIT
+		FROM PRO_BOARD 
+		    LEFT OUTER JOIN E_MEMBER A ON (PRO_BOARD.EMEM_ID = A.EMEM_ID)
+		    LEFT OUTER JOIN COM_INFO B ON (PRO_BOARD.EMEM_ID = B.EMEM_ID)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (PRO_BOARD.PROB_EDU_CD = C.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE D ON (PRO_BOARD.PROB_CAR_CD = D.COMM_CD)
+		    LEFT OUTER JOIN LOCATION F ON (PRO_BOARD.PROB_LOC_CD = F.LOC_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE G ON (PRO_BOARD.PROB_POSI_CD = G.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE H ON (PRO_BOARD.PROB_DEPT_CD = H.COMM_CD)
+		WHERE PROB_SN = #{probSn}
+	</select>
+	
+	<select id="selectMyProBoard" parameterType="PagingVO" resultType="ProBoardVO">
+		SELECT B.*
+		FROM (SELECT A.*, ROWNUM RNUM
+		    FROM (SELECT
+		            PROB_SN,
+		            G.EMEM_ID, G.EMEM_NM,
+		            PROB_TITLE,
+		            PROB_EDU_CD, A.COMM_NM PROB_EDU,
+		            PROB_CAR_CD, B.COMM_NM PROB_CAR,
+		            PROB_PREF,
+		            PROB_PAY,
+		            PROB_LOC_CD, D.LOC_CITY_NM PROB_LOC,
+		            PROB_POSI_CD, E.COMM_NM PROB_POSI,
+		            PROB_DEPT_CD, F.COMM_NM PROB_DEPT,
+		            PROB_DETAIL, PROB_STARTD, PROB_ENDD,
+		            PROB_RSTARTD, PROB_RENDD,
+		            PROB_PAGE, ATT_SN, PROB_WAY,
+		            PROB_SKILL, PROB_DATE
+		        FROM PRO_BOARD
+		            LEFT OUTER JOIN COMMON_MIDDLE A
+		                ON PRO_BOARD.PROB_EDU_CD = A.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE B
+		                ON PRO_BOARD.PROB_CAR_CD = B.COMM_CD
+		            LEFT OUTER JOIN LOCATION D
+		                ON PRO_BOARD.PROB_LOC_CD = D.LOC_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE E
+		                ON PRO_BOARD.PROB_POSI_CD = E.COMM_CD
+		            LEFT OUTER JOIN COMMON_MIDDLE F
+		                ON PRO_BOARD.PROB_DEPT_CD = F.COMM_CD
+		            INNER JOIN E_MEMBER G
+		                ON PRO_BOARD.EMEM_ID = G.EMEM_ID
+		            WHERE PRO_BOARD.EMEM_ID = #{detailSearch.ememId}
+		            ORDER BY PROB_DATE DESC
+		        ) A ) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	<select id="selectMyTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PRO_BOARD
+		WHERE EMEM_ID = #{detailSearch.ememId}
+	</select>
+	
+	<insert id="insertProBoard" parameterType="ProBoardVO">
+		<selectKey resultType="int" keyProperty="probSn" order="BEFORE">
+			SELECT SEQ_PROBOARD.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO PRO_BOARD (
+		    PROB_SN
+		    , EMEM_ID
+		    , PROB_TITLE
+		    , PROB_EDU_CD
+		    , PROB_CAR_CD
+		    <if test="probPref neq null and probPref.length gt 0">
+		    , PROB_PREF
+		    </if>
+		    , PROB_PAY
+		    , PROB_LOC_CD
+		    , PROB_STARTD
+		    , PROB_ENDD
+		    <if test="probPosiCd neq null and probPosiCd.length gt 0">
+		    , PROB_POSI_CD
+		    </if>
+		    <if test="probDeptCd neq null and probDeptCd.length gt 0">
+		    , PROB_DEPT_CD
+		    </if>
+		    , PROB_DETAIL
+		    , PROB_RSTARTD
+		    , PROB_RENDD
+		    <if test="probPage neq null and probPage.length gt 0">
+		    , PROB_PAGE
+		    </if>
+		    <if test="attSn neq null and attSn.length gt 0">
+		    , ATT_SN
+		    </if>
+		    , PROB_WAY
+		    , PROB_SKILL
+		    , PROB_DATE
+		) VALUES (
+			#{probSn,jdbcType=NUMERIC}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{probTitle,jdbcType=VARCHAR}
+			, #{probEduCd,jdbcType=VARCHAR}
+			, #{probCarCd,jdbcType=VARCHAR}
+		    <if test="probPref neq null and probPref.length gt 0">
+			, #{probPref,jdbcType=VARCHAR}
+		    </if>
+			, #{probPay,jdbcType=VARCHAR}
+			, #{probLocCd,jdbcType=VARCHAR}
+			, #{probStartd,jdbcType=VARCHAR}
+			, #{probEndd,jdbcType=VARCHAR}
+		    <if test="probPosiCd neq null and probPosiCd.length gt 0">
+			, #{probPosiCd,jdbcType=VARCHAR}
+			</if>
+		    <if test="probDeptCd neq null and probDeptCd.length gt 0">
+			, #{probDeptCd,jdbcType=VARCHAR}
+			</if>
+			, #{probDetail,jdbcType=VARCHAR}
+			, #{probRstartd,jdbcType=VARCHAR}
+			, #{probRendd,jdbcType=VARCHAR}
+		    <if test="probPage neq null and probPage.length gt 0">
+			, #{probPage,jdbcType=VARCHAR}
+			</if>
+		    <if test="attSn neq null and attSn.length gt 0">
+			, #{attSn,jdbcType=VARCHAR}
+			</if>
+			, #{probWay,jdbcType=VARCHAR}
+			, #{probSkill,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		)
+	</insert>
+	
+	<update id="updateProBoard" parameterType="ProBoardVO">
+		UPDATE PRO_BOARD
+		SET
+			PROB_SN = #{probSn,jdbcType=NUMERIC}
+			, EMEM_ID = #{ememId,jdbcType=VARCHAR}
+			, PROB_TITLE = #{probTitle,jdbcType=VARCHAR}
+			, PROB_EDU_CD = #{probEduCd,jdbcType=VARCHAR}
+			, PROB_CAR_CD = #{probCarCd,jdbcType=VARCHAR}
+			, PROB_PREF = #{probPref,jdbcType=VARCHAR}
+			, PROB_PAY = #{probPay,jdbcType=VARCHAR}
+			, PROB_LOC_CD = #{probLocCd,jdbcType=VARCHAR}
+			, PROB_STARTD = #{probStartd,jdbcType=VARCHAR}
+			, PROB_ENDD = #{probEndd,jdbcType=VARCHAR}
+			, PROB_POSI_CD = #{probPosiCd,jdbcType=VARCHAR}
+			, PROB_DEPT_CD = #{probDeptCd,jdbcType=VARCHAR}
+			, PROB_DETAIL = #{probDetail,jdbcType=VARCHAR}
+			, PROB_RSTARTD = #{probRstartd,jdbcType=VARCHAR}
+			, PROB_RENDD = #{probRendd,jdbcType=VARCHAR}
+			, PROB_PAGE = #{probPage,jdbcType=VARCHAR}
+			<if test="attSn neq null and attSn.length gt 0">
+			, ATT_SN = #{attSn,jdbcType=VARCHAR}
+			</if>
+			, PROB_WAY = #{probWay,jdbcType=VARCHAR}
+			<if test="probSkill neq null and probSkill.length gt 0">
+			, PROB_SKILL = #{probSkill,jdbcType=VARCHAR}
+			</if>
+			, PROB_EDIT = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		WHERE PROB_SN = #{probSn}
+	</update>
+	
+</mapper>

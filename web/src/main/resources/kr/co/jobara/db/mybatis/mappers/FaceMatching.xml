@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.fitme.faceMatching.dao.FaceMatchingDAO">
+	
+	
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM FACAEMATCHING
+		WHERE PMEM_ID = #{pmemId}
+	</select>
+	
+	
+	<insert id="insertFaceMatching" parameterType="FaceMatchingVO">
+		INSERT INTO FACAEMATCHING (
+			PMEM_ID    
+		    <if test="faceEnter1 neq null and faceEnter1.length gt 0">
+		    , FACE_ENTER1
+		    </if>
+		    <if test="facePer1 neq null and facePer1 gt 0">
+		    , FACE_PER1
+		    </if>
+		    <if test="faceEnter2 neq null and faceEnter2.length gt 0">
+		    , FACE_ENTER2
+		    </if>
+		    <if test="facePer2 neq null and facePer2 gt 0">
+		    , FACE_PER2
+		    </if>
+		    <if test="faceEnter3 neq null and faceEnter3.length gt 0">
+		    , FACE_ENTER3
+		    </if>
+		    <if test="facePer3 neq null and facePer3 gt 0">
+		    , FACE_PER3
+		    </if>
+		    <if test="faceEnter4 neq null and faceEnter4.length gt 0">
+		    , FACE_ENTER4
+		    </if>
+		    <if test="facePer4 neq null and facePer4 gt 0">
+		    , FACE_PER4
+		    </if>
+		    <if test="faceEnter5 neq null and faceEnter5.length gt 0">
+		    , FACE_ENTER5
+		    </if>
+		    <if test="facePer5 neq null and facePer5 gt 0">
+			, FACE_PER5
+		    </if>
+			
+		) VALUES (
+			#{pmemId,jdbcType=VARCHAR}
+			<if test="faceEnter1 neq null and faceEnter1.length gt 0">
+		    , #{faceEnter1,jdbcType=VARCHAR}
+		    </if>
+		    <if test="facePer1 neq null and facePer1 gt 0">
+		    , #{facePer1,jdbcType=NUMERIC}
+		    </if>
+		    <if test="faceEnter2 neq null and faceEnter2.length gt 0">
+		    , #{faceEnter2,jdbcType=VARCHAR}
+		    </if>
+		    <if test="facePer2 neq null and facePer2 gt 0">
+		    , #{facePer2,jdbcType=NUMERIC}
+		    </if>
+		    <if test="faceEnter3 neq null and faceEnter3.length gt 0">
+		    , #{faceEnter3,jdbcType=VARCHAR}
+		    </if>
+		    <if test="facePer3 neq null and facePer3 gt 0">
+		    , #{facePer3,jdbcType=NUMERIC}
+		    </if>
+		    <if test="faceEnter4 neq null and faceEnter4.length gt 0">
+		    , #{faceEnter4,jdbcType=VARCHAR}
+		    </if>
+		    <if test="facePer4 neq null and facePer4 gt 0">
+		    , #{facePer4,jdbcType=NUMERIC}
+		    </if>
+		    <if test="faceEnter5 neq null and faceEnter5.length gt 0">
+		    , #{faceEnter5,jdbcType=VARCHAR}
+		    </if>
+		    <if test="facePer5 neq null and facePer5 gt 0">
+			, #{facePer5,jdbcType=NUMERIC}
+		    </if>
+			
+		)
+	</insert>
+	
+	<select id="selectFaceMatching" resultType="FaceMatchingVO" parameterType="string">
+		SELECT 
+		    C.EMEM_NM FACE_ENTER1
+		    , A.FACE_PER1
+		    , D.EMEM_NM FACE_ENTER2
+		    , A.FACE_PER2
+		    , E.EMEM_NM FACE_ENTER3
+		    , A.FACE_PER3
+		    , F.EMEM_NM FACE_ENTER4
+		    , A.FACE_PER4
+		    , G.EMEM_NM FACE_ENTER5
+		    , A.FACE_PER5
+		    , B.PMEM_ID
+		    , B.PMEM_NM
+		    , B.PMEM_PIC
+		FROM
+		    P_MEMBER B, FACAEMATCHING A
+		    LEFT OUTER JOIN E_MEMBER C ON (A.FACE_ENTER1 = C.EMEM_ID)
+		    LEFT OUTER JOIN E_MEMBER D ON (A.FACE_ENTER2 = D.EMEM_ID)
+		    LEFT OUTER JOIN E_MEMBER E ON (A.FACE_ENTER3 = E.EMEM_ID)
+		    LEFT OUTER JOIN E_MEMBER F ON (A.FACE_ENTER4 = F.EMEM_ID)
+		    LEFT OUTER JOIN E_MEMBER G ON (A.FACE_ENTER5 = G.EMEM_ID)
+		WHERE
+		    A.PMEM_ID = B.PMEM_ID
+		AND
+		    A.PMEM_ID = #{pmemId} 
+	</select>
+
+	
+</mapper>

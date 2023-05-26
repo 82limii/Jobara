@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.statisticsInfo.dao.StatisticsInfoDAO">
+
+	<select id="selectEmpYearList" parameterType="string" resultType="StatisticsInfoVO">
+		SELECT A.EMP_SN,
+			   MONTHS_BETWEEN(TRUNC(SYSDATE,'YEAR'),
+			         TRUNC(TO_DATE(B.PMEM_BIR),'YEAR')) /12 +1 YEAR_CNT
+		FROM EMP_INFO A, P_MEMBER B
+		WHERE A.EMEM_ID = #{ememId}
+		  AND A.PMEM_ID = B.PMEM_ID
+	</select>
+	
+	<select id="selectEmpMoneyList" parameterType="string" resultType="StatisticsInfoVO">
+		SELECT A.EMP_SN, TO_NUMBER(A.EMP_SALARY) EMP_SALARY
+		FROM EMP_INFO A, P_MEMBER B
+		WHERE A.EMEM_ID = #{ememId}
+		  AND A.PMEM_ID = B.PMEM_ID
+	</select>
+
+</mapper>

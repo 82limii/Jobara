@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.helps.dao.HelpsDAO">
+	
+	<sql id="searchFrag">
+       	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+       		<choose>
+       			<when test="simpleSearch.searchType eq 'title'">
+       				AND INSTR(HELPS_TITLE, #{simpleSearch.searchWord}) > 0
+       			</when>
+       			<when test="simpleSearch.searchType eq 'content'">
+       				AND INSTR(HELPS_CONTENTS, #{simpleSearch.searchWord}) > 0
+       			</when>
+       			<otherwise>
+   					AND INSTR(HELPS_TITLE, #{simpleSearch.searchWord}) > 0
+   					OR INSTR(HELPS_CONTENTS, #{simpleSearch.searchWord}) > 0
+       			</otherwise>
+       		</choose>
+       	</if>
+	</sql>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM HELPS
+		WHERE HELPS_TITLE NOT LIKE 'RE:%'
+		AND HELPS_ID = #{detailSearch.helpsId}
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectTotalRecordAdmin" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM HELPS
+		WHERE HELPS_TITLE NOT LIKE 'RE:%'
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectHelpsList" parameterType="PagingVO" resultType="HelpsVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT HELPS_SN, HELPS_SN2
+		        	, LPAD('   RE:',6*3*(LEVEL-1), '&nbsp;') || HELPS_TITLE HELPS_TITLE
+		        	, HELPS_ID, HELPS_DATE, HELCO_SN, A.COMM_NM HELPS_KIND
+		        FROM HELPS LEFT OUTER JOIN COMMON_MIDDLE A ON (HELPS.HELPS_KIND_CD = A.COMM_CD)
+		        ]]>
+		        WHERE HELPS_ID = #{detailSearch.helpsId}
+		        <include refid="searchFrag" />
+		        START WITH HELPS_SN2 IS NULL
+                CONNECT BY PRIOR HELPS_SN = HELPS_SN2
+                AND HELPS_TITLE NOT LIKE 'RE:%'
+                ORDER SIBLINGS BY HELPS_SN DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	<select id="selectHelpsListAdmin" parameterType="PagingVO" resultType="HelpsVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT HELPS_SN, HELPS_SN2
+		        	, LPAD('   RE:',6*3*(LEVEL-1), '&nbsp;') || HELPS_TITLE HELPS_TITLE
+		        	, HELPS_ID, HELPS_DATE, HELCO_SN, A.COMM_NM HELPS_KIND
+		        FROM HELPS LEFT OUTER JOIN COMMON_MIDDLE A ON (HELPS.HELPS_KIND_CD = A.COMM_CD)
+		        ]]>
+		        <include refid="searchFrag" />
+		        START WITH HELPS_SN2 IS NULL
+                CONNECT BY PRIOR HELPS_SN = HELPS_SN2
+                AND HELPS_TITLE NOT LIKE 'RE:%'
+                ORDER SIBLINGS BY HELPS_SN DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	
+	<select id="selectHelps" parameterType="int" resultType="HelpsVO" >
+		SELECT
+			HELPS_SN,
+			HELPS_SN2,
+		    HELPS_ID,
+		    HELPS_TITLE,
+		    A.COMM_NM HELPS_KIND,
+		    HELPS_CONTENTS,
+		    ATT_SN,
+		    HELCO_SN,
+		    HELPS_DATE
+		FROM
+		    HELPS LEFT OUTER JOIN COMMON_MIDDLE A ON (HELPS.HELPS_KIND_CD = A.COMM_CD)
+		WHERE HELPS_SN = #{helpsSn}
+	</select>
+	
+	<select id="selectHelpsAns" parameterType="int" resultType="HelpsVO" >
+		SELECT
+			HELPS_SN,
+			HELPS_SN2,
+		    HELPS_ID,
+		    HELPS_TITLE,
+		    HELPS_KIND_CD,
+		    HELPS_CONTENTS,
+		    ATT_SN,
+		    HELCO_SN,
+		    HELPS_DATE
+		FROM
+		    HELPS 
+		WHERE HELPS_SN2 = #{helpsSn2}
+	</select>
+	
+	<insert id="insertHelps" parameterType="HelpsVO">
+	<selectKey resultType="int" keyProperty="helpsSn" order="BEFORE">
+		SELECT SEQ_HELPS.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO HELPS (
+		    HELPS_SN
+		    <if test="helpsSn2 neq null and helpsSn2 gt 0">
+		    	, HELPS_SN2
+		    </if>
+		    , HELPS_ID
+		    , HELPS_TITLE
+		    , HELPS_KIND_CD
+		    , HELPS_CONTENTS
+		    , ATT_SN
+		    , HELCO_SN
+		    , HELPS_ANSWER
+		    , HELPS_DATE
+		) VALUES (
+		    #{helpsSn,jdbcType=NUMERIC}
+		    <if test="helpsSn2 neq null and helpsSn2 gt 0">
+		    	, #{helpsSn2,jdbcType=NUMERIC}
+		    </if>
+			, #{helpsId,jdbcType=VARCHAR}
+			, #{helpsTitle,jdbcType=VARCHAR}
+			, #{helpsKindCd,jdbcType=VARCHAR}
+			, #{helpsContents,jdbcType=CLOB}
+			, #{attSn,jdbcType=VARCHAR}
+			, #{helcoSn,jdbcType=VARCHAR}
+			, #{helpsAnswer,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		)
+	</insert>
+	
+	<update id="updateHelps" parameterType="HelpsVO">
+		UPDATE HELPS
+		SET 
+			HELPS_SN= #{helpsSn,jdbcType=NUMERIC}
+			, HELPS_ID= #{helpsId,jdbcType=VARCHAR}
+			, HELPS_TITLE= #{helpsTitle,jdbcType=VARCHAR}
+			, HELPS_KIND_CD= #{helpsKindCd,jdbcType=VARCHAR}
+			, HELPS_CONTENTS= #{helpsContents,jdbcType=CLOB}
+			, ATT_SN= #{attSn,jdbcType=VARCHAR}
+			, HELCO_SN= #{helcoSn,jdbcType=VARCHAR}
+			, HELPS_ANSWER= #{helpsAnswer,jdbcType=VARCHAR}
+			, HELPS_DATE= #{helpsDate,jdbcType=VARCHAR}
+		WHERE HELPS_SN = #{helpsSn}
+	</update>
+	
+	<select id="selectListForAdmin" resultType="HelpsVO">
+		WITH HELPSORDER AS (
+		    SELECT HELPS.HELPS_SN, HELPS_ID
+		        , HELPS_TITLE, HELPS_KIND_CD, HELPS_CONTENTS
+		        , ATT_SN, HELCO_SN, HELPS_ANSWER
+		        , HELPS_DATE, A.COMM_NM HELPS_KIND
+		    FROM HELPS
+		        LEFT OUTER JOIN COMMON_MIDDLE A ON (HELPS.HELPS_KIND_CD = A.COMM_CD)
+			WHERE HELPS_TITLE NOT LIKE 'RE:%'
+		    ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+		    SELECT HELPSORDER.*, ROWNUM RNUM
+		    FROM HELPSORDER
+		) A
+		WHERE RNUM BETWEEN 1 and 5
+	</select>
+	
+	<delete id="deleteHelps" parameterType="HelpsVO">
+		DELETE
+		FROM HELPS
+		WHERE HELPS_SN = #{helpsSn}
+	</delete>
+</mapper>

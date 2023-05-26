@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd" >
+<tiles-definitions>
+  <definition name="parent" template="/WEB-INF/views/template.jsp">
+     <put-attribute name="preScript" value="/includee/preScript.jsp"/>
+     <put-attribute name="title" value="JOBARA"/>
+     <put-attribute name="headerMenu" value="/includee/headerMenu.jsp"/>
+     <put-attribute name="headerMenuCom" value="/includee/headerMenuCom.jsp"/>
+     <put-attribute name="postScript" value="/includee/postScript.jsp"/>
+     <put-attribute name="footer" value="/includee/footer.jsp"/>
+  </definition>
+  <definition name="parentPro" template="/WEB-INF/views/templatePro.jsp">
+     <put-attribute name="preScript" value="/includee/preScript.jsp"/>
+     <put-attribute name="title" value="JOBARA_Project"/>
+     <put-attribute name="headerMenuPro" value="/includee/headerMenuPro.jsp"/>
+     <put-attribute name="postScript" value="/includee/postScript.jsp"/>
+     <put-attribute name="sidebarPro" value="/includee/sidebarPro.jsp" />
+     <put-attribute name="sidebarComPro" value="/includee/sidebarComPro.jsp" />
+      <put-attribute name="sidebarCommonPro" value="/includee/sidebarCommonPro.jsp" />
+  </definition>
+  <definition name="parentCom" template="/WEB-INF/views/templateCom.jsp">
+     <put-attribute name="preScript" value="/includee/preScript.jsp"/>
+     <put-attribute name="title" value="JOBARA"/>
+     <put-attribute name="headerMenuCom" value="/includee/headerMenuCom.jsp"/>
+     <put-attribute name="postScript" value="/includee/postScript.jsp"/>
+     <put-attribute name="footer" value="/includee/footer.jsp"/>
+  </definition>
+  <definition name="parentAdmin" template="/WEB-INF/views/templateAdmin.jsp">
+     <put-attribute name="preScript" value="/includee/preScript.jsp"/>
+     <put-attribute name="title" value="JOBARA"/>
+     <put-attribute name="headerMenuAdmin" value="/includee/headerMenuAdmin.jsp"/>
+     <put-attribute name="postScript" value="/includee/postScript.jsp"/>
+     <put-attribute name="sidebarAdmin" value="/includee/sidebarAdmin.jsp" />
+  </definition>
+  
+  
+  <definition name="indexAdmin" extends="parentAdmin">
+     <put-attribute name="main" value="/WEB-INF/views/indexAdmin.jsp"/>
+  </definition>
+  <definition name="indexCom" extends="parentCom">
+     <put-attribute name="main" value="/WEB-INF/views/indexCom.jsp"/>
+  </definition>
+  <definition name="index" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/index.jsp"/>
+  </definition>
+  <definition name="indexTest" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/indexTest.jsp"/>
+  </definition>
+  <definition name="searchResult" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/searchResult.jsp"/>
+  </definition>
+  <definition name="jobboard/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/jobboard/{1}.jsp"/>
+  </definition>  
+  <definition name="admin/*" extends="parentAdmin">
+     <put-attribute name="main" value="/WEB-INF/views/admin/{1}.jsp"/>
+  </definition>  
+  <definition name="admin/*/*" extends="parentAdmin">
+     <put-attribute name="main" value="/WEB-INF/views/admin/{1}/{2}.jsp"/>
+  </definition>  
+  <definition name="proboard/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/proboard/{1}.jsp"/>
+  </definition>  
+  <definition name="searchboard/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/searchboard/{1}.jsp"/>
+  </definition>  
+  <definition name="fitme/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/fitme/{1}.jsp"/>
+  </definition>  
+  <definition name="member/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/member/{1}.jsp"/>
+  </definition>  
+  <definition name="find/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/find/{1}.jsp"/>
+  </definition>  
+  <definition name="blackList/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/blackList/{1}.jsp"/>
+  </definition>  
+  <definition name="pay/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/pay/{1}.jsp"/>
+  </definition>  
+  <definition name="login/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/login/{1}.jsp"/>
+  </definition>  
+  <definition name="board/*/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/board/{1}/{2}.jsp"/>
+  </definition>  
+  <definition name="info/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/info/{1}.jsp"/>
+  </definition>  
+  <definition name="portfolio/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/portfolio/{1}.jsp"/>
+  </definition> 
+  <definition name="resume/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/resume/{1}.jsp"/>
+  </definition> 
+  <definition name="review/*/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/review/{1}/{2}.jsp"/>
+  </definition> 
+  <definition name="review/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/review/{1}.jsp"/>
+  </definition> 
+  <definition name="successInt/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/successInt/{1}.jsp"/>
+  </definition> 
+  <definition name="scrap/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/scrap/{1}.jsp"/>
+  </definition> 
+  <definition name="incumbent/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/incumbent/{1}.jsp"/>
+  </definition>  
+  <definition name="apply/*/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/apply/{1}/{2}.jsp"/>
+  </definition>  
+  <definition name="contact/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/contact/{1}.jsp"/>
+  </definition>  
+  <definition name="qna/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/qna/{1}.jsp"/>
+  </definition>  
+  <definition name="faq/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/faq/{1}.jsp"/>
+  </definition>  
+  <definition name="helps/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/helps/{1}.jsp"/>
+  </definition>  
+  <definition name="notice/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/notice/{1}.jsp"/>
+  </definition>  
+  <definition name="apply/*" extends="parent">
+     <put-attribute name="main" value="/WEB-INF/views/apply/{1}.jsp"/>
+  </definition>  
+  
+  <!-- pms main -->
+  <definition name="project/*" extends="parentPro">
+     <put-attribute name="main" value="/WEB-INF/views/project/{1}.jsp"/>
+  </definition> 
+  <definition name="ftp/*" extends="parentPro">
+     <put-attribute name="main" value="/WEB-INF/views/ftp/{1}.jsp"/>
+  </definition>  
+<!--   <definition name="zoom/*" extends="parentPro"> -->
+<!--      <put-attribute name="main" value="/WEB-INF/views/zoom/{1}.jsp"/> -->
+<!--   </definition>  -->
+  
+  
+</tiles-definitions>

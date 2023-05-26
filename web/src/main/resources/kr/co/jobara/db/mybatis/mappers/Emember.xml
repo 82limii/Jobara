@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.member.dao.EmemberDAO">
+
+<!-- 장인슬 -->
+
+	<select id="findIdEmem" resultType="EmemberVO">
+		SELECT EMEM_NM, EMEM_CEO, EMEM_NUM, EMEM_EMAIL, EMEM_ID
+		FROM E_MEMBER 
+		WHERE EMEM_CEO = #{ememCeo} AND EMEM_NUM = #{ememNum} AND EMEM_EMAIL = #{ememEmail}
+	</select>
+	
+	<select id="findPwEmem" resultType="EmemberVO">
+		SELECT EMEM_ID, EMEM_NM, EMEM_TEL, EMEM_MANTEL, EMEM_PASS
+		FROM E_MEMBER 
+		WHERE EMEM_ID=#{ememId} AND EMEM_NUM = #{ememNum} AND EMEM_CEO = #{ememCeo} AND EMEM_MANTEL = #{ememMantel}
+	</select>
+	
+	<update id="updatePassEmem">
+		UPDATE E_MEMBER 
+		SET EMEM_PASS = #{ememPass} 
+		WHERE EMEM_ID = #{ememId}
+	</update>
+	
+	<select id="selectId" resultMap="ememberMap" parameterType="string">
+<!-- 		SELECT E_MEMBER.EMEM_ID, P_MEMBER.PMEM_ID -->
+<!-- 		FROM  E_MEMBER, P_MEMBER                                                   -->
+<!-- 		WHERE EMEM_ID = #{ememId} OR PMEM_ID = #{ememId} -->
+
+		  SELECT  COUNT(ID) AS RES 
+		  FROM (SELECT EMEM_ID AS ID FROM E_MEMBER UNION ALL SELECT PMEM_ID AS ID FROM P_MEMBER) T
+		  WHERE ID= #{ememId}
+	</select>
+	
+
+	<select id="selectEmemberForAuth" resultType="EmemberVO" parameterType="string">
+		SELECT EMEM_ID, EMEM_PASS, EMEM_NM, EMEM_PIC, EMEM_ROLE
+		FROM E_MEMBER                       
+		WHERE EMEM_ID = #{ememId}
+	</select>
+	
+	<sql id="searchFrag">
+		<where>
+			<if test="simpleSearch  neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+				<choose>
+					<when test="simpleSearch.searchType eq 'name'">
+						EMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+					</when>
+					<when test="simpleSearch.searchType eq 'address'">
+						INSTR(EMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</when>
+					<otherwise>
+						EMEM_NM LIKE '%'|| #{simpleSearch.searchWord} ||'%'
+						OR
+						INSTR(EMEM_BADD, #{simpleSearch.searchWord}) > 0 
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</sql>
+	
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO">
+		SELECT COUNT(*)
+		FROM E_MEMBER
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectEmemberList" resultType="EmemberVO">
+		WITH E_MEMBERORDER AS (
+			SELECT ROWID RID
+						,EMEM_ID
+                        ,EMEM_NM
+                        ,EMEM_NUM
+                        ,EMEM_CEO
+                        ,EMEM_TEL
+                        ,EMEM_BADD
+                        ,EMEM_EMAIL                  
+			FROM E_MEMBER
+			<include refid="searchFrag" />
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT E_MEMBERORDER.*, ROWNUM RNUM
+			FROM E_MEMBERORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<resultMap type="EmemberVO" id="ememberMap" autoMapping="true">
+		<id property="ememId" column="EMEM_ID"/>
+	</resultMap>
+	
+	<select id="selectEmember" resultMap="ememberMap" parameterType="string">
+		SELECT EMEM_ID, EMEM_PASS, EMEM_NUM
+				,EMEM_NM, EMEM_CEO, EMEM_ZIP, EMEM_BADD
+				,EMEM_DADD, EMEM_TEL, EMEM_FAX, EMEM_EMAIL
+				,EMEM_MAN, EMEM_MANTEL, EMEM_PIC, EMEM_AI  
+		FROM  E_MEMBER                                                         
+		WHERE EMEM_ID = #{ememId}
+	</select>
+	
+	<insert id="insertEmember" parameterType="EmemberVO">
+		INSERT INTO E_MEMBER (
+		    EMEM_ID, EMEM_PASS, EMEM_NUM
+				,EMEM_NM, EMEM_CEO, EMEM_ZIP, EMEM_BADD
+				,EMEM_DADD, EMEM_TEL, EMEM_FAX, EMEM_EMAIL
+				,EMEM_MAN, EMEM_MANTEL
+		    	<if test="ememPic neq null and ememPic.length gt 0">
+				,EMEM_PIC
+		   	 	</if>
+		   	 	,EMEM_ROLE
+		    
+		) VALUES (
+			#{ememId,jdbcType=VARCHAR}
+			,#{ememPass,jdbcType=VARCHAR}
+			,#{ememNum,jdbcType=VARCHAR}
+			,#{ememNm,jdbcType=VARCHAR}
+			,#{ememCeo,jdbcType=VARCHAR}
+			,#{ememZip,jdbcType=VARCHAR}
+			,#{ememBadd,jdbcType=VARCHAR}
+			,#{ememDadd,jdbcType=VARCHAR}
+			,#{ememTel,jdbcType=VARCHAR}
+			,#{ememFax,jdbcType=VARCHAR}
+			,#{ememEmail,jdbcType=VARCHAR}
+			,#{ememMan,jdbcType=VARCHAR}
+			,#{ememMantel,jdbcType=VARCHAR}
+			<if test="ememPic neq null and ememPic.length gt 0">
+			,#{ememPic,jdbcType=VARCHAR}
+			</if>
+			,'ROLE_USER'
+		)   
+	</insert>
+	<update id="updateEmember" parameterType="EmemberVO">
+		UPDATE E_MEMBER
+		SET EMEM_NM= #{ememNm,jdbcType=VARCHAR}
+			, EMEM_CEO= #{ememCeo,jdbcType=VARCHAR}
+			, EMEM_ZIP= #{ememZip,jdbcType=VARCHAR}
+			, EMEM_BADD= #{ememBadd,jdbcType=VARCHAR}
+			, EMEM_DADD= #{ememDadd,jdbcType=VARCHAR}
+			, EMEM_TEL= #{ememTel,jdbcType=VARCHAR}
+			, EMEM_FAX= #{ememFax,jdbcType=VARCHAR}
+			, EMEM_EMAIL= #{ememEmail,jdbcType=VARCHAR}
+			, EMEM_MAN= #{ememMan,jdbcType=VARCHAR}
+			, EMEM_MANTEL= #{ememMantel,jdbcType=VARCHAR}
+			<if test="ememPic neq null and ememPic.length gt 0">
+			, EMEM_PIC= #{ememPic,jdbcType=VARCHAR}
+			</if>
+		WHERE EMEM_ID = #{ememId,jdbcType=VARCHAR}
+	</update>
+	
+	<resultMap type="EmemberVO" id="searchMap" autoMapping="true">
+		<id property="ememId" column="EMEM_ID"/>
+		<association property="info" javaType="InfoVO" autoMapping="true">
+			<id property="ememId" column="EMEM_ID"/>
+		</association>
+	</resultMap>
+	
+	<select id="selectSearchList" parameterType="string" resultMap="searchMap">
+		SELECT 
+			A.EMEM_ID, EMEM_NM, EMEM_CEO,
+		    EMEM_PIC, COM_HEADCNT, COM_FOUNDDATE,
+		    COM_TAKE, COM_BUSSINESS
+		FROM E_MEMBER A LEFT OUTER JOIN COM_INFO B ON (A.EMEM_ID = B.EMEM_ID)
+		WHERE INSTR(EMEM_NM, #{searchName}) > 0
+	</select>
+</mapper>

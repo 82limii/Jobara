@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.coint.dao.CointDAO">
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM COTE
+	</select>
+	
+	
+	<select id="selectCointList" parameterType="PagingVO" resultType="CointVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT * FROM
+					(select 'cote' as COTE, COTE_SN, COTE_TITLE,PMEM_ID,COTE_DATE, EMEM_ID 
+					FROM 
+						COTE
+					UNION ALL
+					select 
+						'inter' as INTERVIEW, INTER_SN, INTER_TITLE,PMEM_ID,INTER_DATE,EMEM_ID
+					FROM 
+						INTERVIEW)
+		        ]]>
+		        WHERE
+		        	EMEM_ID = #{detailSearch.ememId}
+                ORDER BY COTE_DATE DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+</mapper>

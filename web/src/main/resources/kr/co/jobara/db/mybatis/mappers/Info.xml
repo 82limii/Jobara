@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.info.dao.InfoDAO">
+
+	<select id="selectInfo" parameterType="string" resultType="InfoVO">
+		SELECT 
+		    B.EMEM_ID, B.COM_HEADCNT, B.COM_FOUNDDATE,
+		    B.COM_CAPITAL, B.COM_TAKE, B.COM_BUSSINESS, B.COM_ADD,
+		    B.COM_HOME, B.COM_WELFARE, A.EMEM_NM, A.EMEM_PIC 
+		FROM E_MEMBER A LEFT OUTER JOIN COM_INFO B ON (A.EMEM_ID = B.EMEM_ID)
+		WHERE A.EMEM_ID=#{ememId}
+	</select>
+
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM JOB_BOARD
+		WHERE EMEM_ID = #{detailSearch.ememId}
+	</select>
+
+	<select id="selectInfoList" parameterType="PagingVO" resultType="JobBoardVO">
+		SELECT B.*
+		FROM (SELECT A.*, ROWNUM RNUM
+		    FROM (SELECT
+		            JOB_SN,
+					EMEM_ID,
+					JOB_TITLE,
+					JOB_STARTD,
+					JOB_ENDD
+		        FROM JOB_BOARD
+		        	WHERE EMEM_ID = #{detailSearch.ememId}
+		        	ORDER BY 1 DESC
+		        ) A ) B
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+
+</mapper>

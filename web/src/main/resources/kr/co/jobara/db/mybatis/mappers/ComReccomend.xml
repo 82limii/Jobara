@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.fitme.dao.ComReccomendDAO">
+	<insert id="insertSurvey" parameterType="SurveyVO">
+		<selectKey resultType="int" keyProperty="surSn" order="BEFORE">
+			SELECT SEQ_SURVEY.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO SURVEY (
+		    SUR_SN,
+		    PMEM_ID,
+		    SUR1,
+		    SUR2,
+		    SUR3,
+		    SUR4,
+		    SUR5,
+		    SUR6,
+		    SUR7,
+		    SUR8,
+		    SUR9,
+		    SUR10,
+		    SUR11,
+		    SUR12,
+		    SUR13,
+		    SUR14,
+		    SUR15,
+		    SUR16,
+		    SUR17,
+		    SUR18,
+		    SUR19,
+		    SUR20,
+		    SUR_DATE
+		) VALUES (
+		    #{surSn,jdbcType=NUMERIC}
+		    , #{pmemId,jdbcType=VARCHAR}
+		    , #{sur1,jdbcType=VARCHAR}
+		    , #{sur2,jdbcType=VARCHAR}
+		    , #{sur3,jdbcType=VARCHAR}
+		    , #{sur4,jdbcType=VARCHAR}
+		    , #{sur5,jdbcType=VARCHAR}
+		    , #{sur6,jdbcType=VARCHAR}
+		    , #{sur7,jdbcType=VARCHAR}
+		    , #{sur8,jdbcType=VARCHAR}
+		    , #{sur9,jdbcType=VARCHAR}
+		    , #{sur10,jdbcType=VARCHAR}
+		    , #{sur11,jdbcType=VARCHAR}
+		    , #{sur12,jdbcType=VARCHAR}
+		    , #{sur13,jdbcType=VARCHAR}
+		    , #{sur14,jdbcType=VARCHAR}
+		    , #{sur15,jdbcType=VARCHAR}
+		    , #{sur16,jdbcType=VARCHAR}
+		    , #{sur17,jdbcType=VARCHAR}
+		    , #{sur18,jdbcType=VARCHAR}
+		    , #{sur19,jdbcType=VARCHAR}
+		    , #{sur20,jdbcType=VARCHAR}
+		    , TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		)
+	</insert>
+	
+	<select id="selectTodaySurvey" parameterType="string" resultType="SurveyVO">
+		SELECT SUR_SN, PMEM_ID, SUR_DATE
+		FROM SURVEY
+		WHERE PMEM_ID = #{pmemId}
+		    AND SUR_DATE = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+	</select>
+	
+	<select id="selectRecommend" parameterType="string" resultType="RecommendVO">
+		SELECT *
+		FROM (
+		    SELECT
+		        PMEM_ID,
+		        EMEM_ID_1, EMEM_ID_2, EMEM_ID_3, EMEM_ID_4, EMEM_ID_5,
+		        EMEM_ID_6, EMEM_ID_7, EMEM_ID_8, EMEM_ID_9, EMEM_ID_10,
+		        RATE_1, RATE_2, RATE_3, RATE_4, RATE_5,
+		        RATE_6, RATE_7, RATE_8, RATE_9, RATE_10,
+		        B.EMEM_NM EMEM_NM_1, C.EMEM_NM EMEM_NM_2, D.EMEM_NM EMEM_NM_3,
+		        E.EMEM_NM EMEM_NM_4, F.EMEM_NM EMEM_NM_5, G.EMEM_NM EMEM_NM_6,
+		        H.EMEM_NM EMEM_NM_7, I.EMEM_NM EMEM_NM_8, J.EMEM_NM EMEM_NM_9,
+		        K.EMEM_NM EMEM_NM_10, SUR_DATE
+		    FROM
+		        RECOMMEND A 
+		            LEFT OUTER JOIN E_MEMBER B ON (A.EMEM_ID_1 = B.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER C ON (A.EMEM_ID_2 = C.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER D ON (A.EMEM_ID_3 = D.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER E ON (A.EMEM_ID_4 = E.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER F ON (A.EMEM_ID_5 = F.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER G ON (A.EMEM_ID_6 = G.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER H ON (A.EMEM_ID_7 = H.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER I ON (A.EMEM_ID_8 = I.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER J ON (A.EMEM_ID_9 = J.EMEM_ID)
+		            LEFT OUTER JOIN E_MEMBER K ON (A.EMEM_ID_10 = K.EMEM_ID)
+		    WHERE PMEM_ID = #{pmemId}
+		    ORDER BY SUR_DATE DESC
+		    )
+		WHERE ROWNUM = 1
+	</select>
+	
+</mapper>

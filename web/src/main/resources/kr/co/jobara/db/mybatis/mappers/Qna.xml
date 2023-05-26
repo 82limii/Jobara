@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.qna.dao.QnaDAO">
+	<sql id="searchFrag">
+        <where>
+        	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+        		<choose>
+        			<when test="simpleSearch.searchType eq 'title'">
+        				INSTR(QNA_TITLE, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'content'">
+        				INSTR(QNA_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'writer'">
+        				INSTR(PMEM_ID, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<otherwise>
+       					INSTR(QNA_TITLE, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(QNA_CONTENTS, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(PMEM_ID, #{simpleSearch.searchWord}) > 0
+        			</otherwise>
+        		</choose>
+        	</if>
+        </where>
+	</sql>
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM QNA
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectQna" parameterType="int" resultType="QnaVO">
+		SELECT
+		    QNA_SN,		    QNA_SN2,		    QNA_TITLE,
+		    QNA_CONTENTS,		    QNA_DATE,		    PMEM_ID,
+		    ATT_SN,		EMEM_ID
+		FROM QNA
+		WHERE QNA_SN=#{qnaSn}
+	</select>
+	
+	<select id="selectQnaList" parameterType="PagingVO" resultType="QnaVO">
+		WITH QNAORDER AS (
+			<![CDATA[
+			SELECT QNA_SN, QNA_SN2
+	        	, LPAD('   RE:',6*3*(LEVEL-1), '&nbsp;') || QNA_TITLE QNA_TITLE
+	        	, PMEM_ID, EMEM_ID, QNA_DATE, QNA_EDIT
+	        FROM QNA
+	        ]]>
+			<include refid="searchFrag" />
+			START WITH QNA_SN2 IS NULL
+            CONNECT BY PRIOR QNA_SN = QNA_SN2
+            ORDER SIBLINGS BY QNA_SN DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT QNAORDER.*, ROWNUM RNUM
+			FROM QNAORDER
+			ORDER BY RNUM ASC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+		
+	</select>
+	
+	<insert id="insertQna" parameterType="QnaVO">
+	<selectKey resultType="int" keyProperty="qnaSn" order="BEFORE">
+		SELECT SEQ_QNA.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO QNA (
+		    QNA_SN
+		    <if test="qnaSn2 neq null and qnaSn2 gt 0">
+		    	, QNA_SN2
+		    </if>
+		    , QNA_TITLE
+		    , QNA_CONTENTS
+		    , QNA_DATE
+		    , PMEM_ID
+		    , EMEM_ID
+		    <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(attSn)">
+		    , ATT_SN
+		    </if>
+		) VALUES (
+		    #{qnaSn,jdbcType=NUMERIC}
+		    <if test="qnaSn2 neq null and qnaSn2 gt 0">
+				, #{qnaSn2,jdbcType=NUMERIC}
+			</if>
+			, #{qnaTitle,jdbcType=VARCHAR}
+			, #{qnaContents,jdbcType=CLOB}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+		    <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(attSn)">
+			, #{attSn,jdbcType=VARCHAR}
+		    </if>
+		)
+	</insert>
+	
+	<update id="updateQna" parameterType="QnaVO">
+		UPDATE QNA
+		SET
+			QNA_TITLE = #{qnaTitle,jdbcType=VARCHAR}
+			, QNA_CONTENTS = #{qnaContents,jdbcType=CLOB}
+			<if test="@org.apache.commons.lang3.StringUtils@isNotBlank(attSn)">
+			, ATT_SN = #{attSn,jdbcType=VARCHAR}
+			</if>
+		WHERE QNA_SN = #{qnaSn}
+	</update>
+	
+	<delete id="deleteQna" parameterType="QnaVO">
+		DELETE FROM QNA
+		WHERE QNA_SN = #{qnaSn}
+	</delete>
+		
+</mapper>

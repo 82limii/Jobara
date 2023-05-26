@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.notice.dao.NoticeDAO">
+
+	<sql id="searchFrag">
+        <where>
+        	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+        		<choose>
+        			<when test="simpleSearch.searchType eq 'title'">
+        				INSTR(NOTICE_TITLE, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'content'">
+        				INSTR(NOTICE_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<otherwise>
+       					INSTR(NOTICE_TITLE, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(NOTICE_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</otherwise>
+        		</choose>
+        	</if>
+        </where>
+	</sql>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM NOTICE
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectNotice" parameterType="int" resultType="NoticeVO">
+		SELECT
+		    NOTICE_SN,		    ADMIN_ID,		    NOTICE_TITLE,
+		    NOTICE_CONTENTS,		    NOTICE_DATE,		NOTICE_EDIT
+		FROM NOTICE
+		WHERE NOTICE_SN=#{noticeSn}
+	</select>
+	
+	<select id="selectNoticeList" parameterType="PagingVO" resultType="NoticeVO">
+		WITH NOTICEORDER AS (
+			SELECT NOTICE_SN, NOTICE_TITLE, NOTICE_DATE                    
+			FROM NOTICE
+			<include refid="searchFrag" />
+			ORDER BY NOTICE_SN
+		)
+		SELECT A.*
+		FROM(
+			SELECT NOTICEORDER.*, ROWNUM RNUM
+			FROM NOTICEORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<insert id="insertNotice" parameterType="NoticeVO">
+	<selectKey resultType="int" keyProperty="noticeSn" order="BEFORE">
+		SELECT SEQ_NOTICE.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO NOTICE (
+		    NOTICE_SN
+		    , ADMIN_ID
+		    , NOTICE_TITLE
+		    , NOTICE_CONTENTS
+		    , NOTICE_DATE
+		    , NOTICE_EDIT
+		) VALUES (
+		    #{noticeSn,jdbcType=NUMERIC}
+			, 'ajava'
+			, #{noticeTitle,jdbcType=VARCHAR}
+			, #{noticeContents,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{noticeEdit,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="updateNotice" parameterType="NoticeVO">
+		UPDATE NOTICE
+		SET
+			NOTICE_TITLE = #{noticeTitle,jdbcType=VARCHAR}
+			, NOTICE_CONTENTS = #{noticeContents,jdbcType=VARCHAR}
+		WHERE NOTICE_SN = #{noticeSn}
+	</update>
+	
+	<delete id="deleteNotice" parameterType="NoticeVO">
+		DELETE FROM NOTICE
+		WHERE NOTICE_SN = #{noticeSn}
+	</delete>
+
+</mapper>

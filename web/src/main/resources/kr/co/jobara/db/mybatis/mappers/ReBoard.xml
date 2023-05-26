@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.board.shareit.dao.ShareItDAO">
+	<select id="selectShareItBoardList" parameterType="PagingVO" resultType="ShareItVO">
+	SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		<![CDATA[
+			SELECT
+			   REB_SN,  REB_SN2
+			   , LPAD('   RE:',6*3*(level-1), '&nbsp;') || REB_TITLE REB_TITLE
+			   , REB_CONTENTS,  REB_DATE
+			   , PMEM_ID, REB_EDIT
+			FROM
+			    REBOARD
+		]]>
+		  		START WITH REB_SN2 IS NULL
+                CONNECT BY PRIOR REB_SN = REB_SN2
+                ORDER SIBLINGS BY REB_SN DESC
+			 	    ) A
+				) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM REBOARD
+	</select>
+	
+	
+	<select id="selectShareItBoard" parameterType="int" resultType="ShareItVO">
+		SELECT
+		    A.REB_SN, A.REB_SN2, A.REB_COMB,
+		    A.REB_TITLE, A.REB_CONTENTS, A.REB_DATE,
+		    A.PMEM_ID, B.PMEM_NM
+		FROM REBOARD A
+		    LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+		WHERE REB_SN = #{rebSn}
+	
+	</select>
+	
+	<insert id="insertShareItBoard" parameterType="ShareItVO">
+		<selectKey resultType="int" keyProperty="rebSn" order="BEFORE">
+			SELECT NVL(MAX(REB_SN),0)+1 
+			FROM REBOARD
+		</selectKey>
+		 INSERT INTO REBOARD (
+		    REB_SN
+		    <if test="rebSn2 neq null and rebSn2 gt 0">
+		    , REB_SN2
+		    </if>
+		    , REB_TITLE
+		    , REB_CONTENTS
+		    , REB_DATE
+		    , PMEM_ID
+		) VALUES (
+		#{rebSn,jdbcType=NUMERIC}
+		<if test="rebSn2 neq null and rebSn2 gt 0">
+		, #{rebSn2,jdbcType=NUMERIC}
+		</if>
+		, #{rebTitle,jdbcType=VARCHAR}
+		, #{rebContents,jdbcType=VARCHAR}
+		, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		, #{pmemId,jdbcType=VARCHAR}
+		)
+	</insert>
+	<update id="updateShareItBoard" parameterType="ShareItVO">
+		 UPDATE REBOARD
+		    SET
+		    REB_EDIT= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		    , REB_TITLE= #{rebTitle,jdbcType=VARCHAR}
+		    , REB_CONTENTS= #{rebContents,jdbcType=VARCHAR}
+		WHERE
+		    REB_SN = #{rebSn}
+	
+	</update>
+	
+	
+</mapper>

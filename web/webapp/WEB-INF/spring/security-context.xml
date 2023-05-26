@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xmlns:security="http://www.springframework.org/schema/security"
+   xmlns:c="http://www.springframework.org/schema/c"
+   xmlns:p="http://www.springframework.org/schema/p"
+   xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+   
+   <bean id="passwordEncoder" class="org.springframework.security.crypto.factory.PasswordEncoderFactories"
+      factory-method="createDelegatingPasswordEncoder"></bean>
+      
+   <bean id="daoAuthenticationProvider" class="org.springframework.security.authentication.dao.DaoAuthenticationProvider"
+      p:userDetailsService-ref="authenticateServiceImpl"
+      p:hideUserNotFoundExceptions="false"
+      p:passwordEncoder-ref="passwordEncoder"
+   ></bean>
+
+	<bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager" >
+		<constructor-arg name="providers">
+			<list>
+				<ref bean="daoAuthenticationProvider"/>
+			</list>
+		</constructor-arg>
+	</bean>
+
+<!--    <bean id="userDetailService" class="kr.or.smart.commons.service.AuthenticateServiceImpl"></bean> -->
+   
+<!--    <security:authentication-manager> -->
+<!--       <security:authentication-provider ref="daoAuthenticationProvider"></security:authentication-provider> -->
+<!--       <security:authentication-provider user-service-ref="userDetailService"></security:authentication-provider> -->
+<!--    </security:authentication-manager> -->
+   
+   <bean id="authenticationSuccessHandler" class="kr.co.jobara.security.CustomAuthenticationSuccessHandler"
+      p:defaultTargetUrl="/index.do"
+      p:alwaysUseDefaultTargetUrl="false"
+   ></bean>
+   
+   <bean id="customLogoutSuccessHandler" class="kr.co.jobara.security.CustomLogoutSuccessHandler"></bean>
+   
+<!--    <security:http security="none" pattern="/resources/**"></security:http> -->
+   <security:http auto-config="true" use-expressions="true" authentication-manager-ref="authenticationManager">
+      <security:access-denied-handler error-page="/errors/error503.jsp"/>
+      <security:form-login
+         login-page="/login/loginForm.do"
+         authentication-failure-url="/login/loginForm.do?error=true"
+         username-parameter="memId"
+         password-parameter="memPw"
+         login-processing-url="/login/loginProcess.do"
+         default-target-url="/index.do"
+         authentication-success-handler-ref="authenticationSuccessHandler" />
+      <security:logout logout-url="/login/logout.do" invalidate-session="true" success-handler-ref="customLogoutSuccessHandler"/>
+      <security:anonymous/>
+<!--       <security:intercept-url pattern="/board/*Insert.*" access="hasRole('ROLE_ADMIN')"/> -->
+<!--       <security:intercept-url pattern="/board/*Update.*" access="hasRole('ROLE_ADMIN')"/> -->
+      <security:intercept-url pattern="/helps/*" access="isAuthenticated()"/>
+<!--       <security:intercept-url pattern="/index.do" access="hasAnyRole('ROLE_USER')"/> -->
+      <security:csrf disabled="true"/>
+   </security:http>
+
+</beans>

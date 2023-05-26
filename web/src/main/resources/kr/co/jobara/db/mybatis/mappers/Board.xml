@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.board.askit.dao.AskItDAO">
+	<sql id="searchFrag">
+        <where>
+        	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+        		<choose>
+        			<when test="simpleSearch.searchType eq 'title'">
+        				INSTR(BOARD_TITLE, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'content'">
+        				INSTR(BOARD_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'writer'">
+        				INSTR(PMEM_ID, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<otherwise>
+       					INSTR(BOARD_TITLE, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(BOARD_CONTENTS, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(PMEM_ID, #{simpleSearch.searchWord}) > 0
+        			</otherwise>
+        		</choose>
+        	</if>
+        </where>
+	</sql>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM BOARD
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectAskItBoardList" parameterType="PagingVO" resultType="AskItVO">
+	SELECT D.*
+			FROM (
+			SELECT C.*, ROWNUM RNUM
+			FROM(
+			<![CDATA[	    
+			    SELECT
+				    A.BOARD_SN, A.PMEM_ID,  A.BOARD_TITLE,
+				    A.BOARD_COMB,  A.BOARD_CONTENTS,  A.BOARD_DATE,
+				    A.ATT_SN,  A.BOARD_EDIT, B.PMEM_NM
+				FROM BOARD A
+   					LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+			 	ORDER BY A.BOARD_SN
+	        ]]>
+			      ) C
+			 	ORDER BY RNUM DESC
+			) D
+			<![CDATA[
+			    WHERE RNUM >= #{startRow} AND RNUM <= #{endRow} 
+			 ]]>
+	</select>
+	<insert id="insertAskItBoard" parameterType="AskItVO">
+		<selectKey resultType="int" keyProperty="boardSn" order="BEFORE">
+			SELECT NVL(MAX(BOARD_SN),0)+1 
+			FROM BOARD
+		</selectKey>
+		    INSERT INTO BOARD (
+			      BOARD_SN
+			    , PMEM_ID
+			    , BOARD_TITLE
+			    <if test="boardComb neq null and boardComb.length gt 0">
+			    , BOARD_COMB
+			    </if>
+			    , BOARD_CONTENTS
+			    , BOARD_DATE
+			    <if test="attSn neq null and attSn gt 0">
+			    , ATT_SN
+				</if>
+			) VALUES (
+			      #{boardSn,jdbcType=NUMERIC}
+			    , #{pmemId,jdbcType=VARCHAR}
+			    , #{boardTitle,jdbcType=VARCHAR}
+			    <if test="boardComb neq null and boardComb.length gt 0">
+			    , #{boardComb,jdbcType=VARCHAR}
+			    </if>
+			    , #{boardContents,jdbcType=CLOB}
+			    , TO_CHAR(SYSDATE,'YYYY-MM-DD')
+			    <if test="attSn neq null and attSn gt 0">
+			    , #{attSn,jdbcType=VARCHAR}
+			    </if>
+			)
+	</insert>
+	
+	<select id="selectAskItBoard" parameterType="int" resultType="AskItVO">
+		SELECT A.BOARD_SN  , A.PMEM_ID   , A.BOARD_TITLE
+	        , A.BOARD_COMB  , A.BOARD_CONTENTS  , A.BOARD_DATE
+	        , A.ATT_SN , B.PMEM_NM
+		FROM BOARD A
+		    LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+		WHERE A.BOARD_SN = #{boardSn}
+	</select>
+	
+	<delete id="deleteAskItBoard" parameterType="int">
+		DELETE FROM BOARD
+		WHERE BOARD_SN = #{boardSn}
+	</delete>
+	
+	<update id="updateAskItBoard" parameterType="AskItVO">
+		UPDATE BOARD
+		    SET
+			  BOARD_TITLE= #{boardTitle,jdbcType=VARCHAR}
+			, BOARD_CONTENTS= #{boardContents,jdbcType=VARCHAR}
+			, ATT_SN= #{attSn,jdbcType=VARCHAR}
+			, BOARD_EDIT= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		WHERE
+		    BOARD_SN = #{boardSn }
+	</update>
+	
+</mapper>
+
+
+
+
+
+
+

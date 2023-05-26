@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.pms.project.dao.ProTaskDAO">
+
+	<resultMap type="kr.co.jobara.pms.project.vo.GanttVO" id="TaskMap">
+		<result property="proName" column="PRO_NAME"/>
+		<result property="name" column="PROT_NM"/>
+		<result property="start" column="PROT_STARTD"/>
+		<result property="end" column="PROT_ENDD"/>
+		<result property="impCd" column="PROT_IMPRT_CD"/>
+		<result property="state" column="PROT_STATE"/>
+		<result property="pid" column="PMEM_ID"/>
+		<result property="eid" column="EMEM_ID"/>
+		<result property="protSn" column="PROT_SN"/>
+		<result property="proSn" column="PRO_SN"/>
+		<result property="y" column="PROT_PROGRESS"/>
+	</resultMap>
+
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PRO_TASK
+	</select>
+	
+	<select id="selectTaskBoardList" parameterType="PagingVO" resultType="ProTaskVO">
+		SELECT E.*
+			FROM (
+			SELECT D.*, ROWNUM RNUM
+			FROM(
+			    SELECT
+			        PRO_TASK.PROT_SN, PRO_TASK.PRO_SN,  PRO_TASK.PMEM_ID,  PRO_TASK.PROT_NM,
+			        PRO_TASK.PROT_IMPRT_CD, A.COMM_NM PROT_IMPRT,
+			        PRO_TASK.PROT_MANAGER, PRO_TASK.PROT_DATE,
+					PRO_TASK.PROT_STARTD, PRO_TASK.PROT_ENDD, PRO_TASK.PROT_PROGRESS,
+					PRO_TASK.PROT_STATE, B.COMM_NM PROT_STATE_NM, PRO_TASK.PROT_EDIT, C.PMEM_NM
+				FROM PRO_TASK
+				    LEFT OUTER JOIN COMMON_MIDDLE A ON(PRO_TASK.PROT_IMPRT_CD = A.COMM_CD)
+				    LEFT OUTER JOIN COMMON_MIDDLE B ON(PRO_TASK.PROT_STATE = B.COMM_CD)
+				    LEFT OUTER JOIN P_MEMBER C ON(PRO_TASK.PMEM_ID = C.PMEM_ID)
+				WHERE PRO_TASK.PRO_SN = #{detailSearch.proSn }
+			      ) D
+			) E
+			<![CDATA[
+			    WHERE RNUM >= #{startRow} AND RNUM <= #{endRow} 
+			 	ORDER BY RNUM DESC
+			 ]]>
+	</select>
+	
+	<select id="selectTaskBoard" parameterType="int" resultType="ProTaskVO">
+		SELECT
+	        PRO_TASK.PROT_SN, PRO_TASK.PRO_SN,  PRO_TASK.PMEM_ID,  PRO_TASK.PROT_NM,
+	        PRO_TASK.PROT_IMPRT_CD, A.COMM_NM PROT_IMPRT,
+	        PRO_TASK.PROT_MANAGER, PRO_TASK.PROT_DATE,
+			PRO_TASK.PROT_STARTD, PRO_TASK.PROT_ENDD, PRO_TASK.PROT_PROGRESS,
+			PRO_TASK.PROT_STATE, B.COMM_NM PROT_STATE_NM, PRO_TASK.PROT_EDIT, C.PMEM_NM
+		FROM PRO_TASK
+		    LEFT OUTER JOIN COMMON_MIDDLE A ON(PRO_TASK.PROT_IMPRT_CD = A.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON(PRO_TASK.PROT_STATE = B.COMM_CD)
+		    LEFT OUTER JOIN P_MEMBER C ON(PRO_TASK.PMEM_ID = C.PMEM_ID)
+		WHERE PRO_TASK.PROT_SN = #{protSn}
+	</select>
+	
+	<select id="selectProMemList" resultType="ProTaskVO">
+		SELECT A.PMEM_ID, B.PMEM_NM
+		FROM MEMBER A
+		    LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+	</select>
+	
+	<insert id="insertTaskBoard" parameterType="ProTaskVO" >
+		<selectKey resultType="int" keyProperty="protSn" order="BEFORE">
+			SELECT NVL(MAX(PROT_SN),0)+1 
+			FROM PRO_TASK
+		</selectKey>
+		INSERT INTO PRO_TASK (
+		    PROT_SN, PRO_SN,   PMEM_ID,
+		    PROT_NM,  PROT_IMPRT_CD,  PROT_MANAGER,
+		    PROT_DATE,  PROT_STARTD,  PROT_ENDD,
+		    PROT_PROGRESS,  PROT_STATE
+		) VALUES (
+		  #{protSn,jdbcType=NUMERIC}
+		, #{proSn,jdbcType=NUMERIC}
+		, #{pmemId,jdbcType=VARCHAR}
+		, #{protNm,jdbcType=VARCHAR}
+		, #{protImprtCd,jdbcType=VARCHAR}
+		, #{protManager,jdbcType=VARCHAR}
+		, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		, #{protStartd,jdbcType=VARCHAR}
+		, #{protEndd,jdbcType=VARCHAR}
+		, #{protProgress,jdbcType=NUMERIC}
+		, #{protState,jdbcType=VARCHAR}
+		)
+	</insert>	
+
+	<update id="updateTaskBoard" parameterType="ProTaskVO">
+		UPDATE PRO_TASK
+    SET
+         PROT_NM= #{protNm,jdbcType=VARCHAR}
+        , PROT_IMPRT_CD= #{protImprtCd,jdbcType=VARCHAR}
+        , PROT_MANAGER= #{protManager,jdbcType=VARCHAR}
+        , PROT_STARTD= #{protStartd,jdbcType=VARCHAR}
+        , PROT_ENDD= #{protEndd,jdbcType=VARCHAR}
+        , PROT_PROGRESS= #{protProgress,jdbcType=NUMERIC}
+        , PROT_STATE= #{protState,jdbcType=VARCHAR}
+        , PROT_EDIT= TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+	WHERE
+	    PROT_SN = #{protSn}
+	</update>
+	
+	<select id="selectTaskList" parameterType="string" resultMap="TaskMap">
+		SELECT
+		    A.PROT_SN,
+		    A.PRO_SN,
+		    C.PRO_NAME,
+		    A.PMEM_ID,
+		    B.EMEM_ID,
+		    A.PROT_NM,
+		    A.PROT_IMPRT_CD,
+		    A.PROT_PROGRESS/10 AS PROT_PROGRESS,
+		    TO_DATE(A.PROT_STARTD, 'YYYY-MM-DD') AS PROT_STARTD,
+		    TO_DATE(A.PROT_ENDD, 'YYYY-MM-DD') AS PROT_ENDD,
+		    A.PROT_STATE
+		FROM PRO_TASK A INNER JOIN EMP_INFO B ON (A.PMEM_ID = B.PMEM_ID)
+		    INNER JOIN PRO_CREATE C ON (A.PRO_SN = C.PRO_SN)
+		WHERE A.PMEM_ID = #{pmemId}
+	</select>
+	
+	<select id="selectTaskListCom" parameterType="string" resultMap="TaskMap">
+		SELECT
+		    A.PROT_SN,
+		    A.PRO_SN,
+		    C.PRO_NAME,
+		    A.PMEM_ID,
+		    B.EMEM_ID,
+		    A.PROT_NM,
+		    A.PROT_IMPRT_CD,
+		    A.PROT_PROGRESS/10 AS PROT_PROGRESS,
+		    TO_DATE(A.PROT_STARTD, 'YYYY-MM-DD') AS PROT_STARTD,
+		    TO_DATE(A.PROT_ENDD, 'YYYY-MM-DD') AS PROT_ENDD,
+		    A.PROT_STATE
+		FROM PRO_TASK A INNER JOIN EMP_INFO B ON (A.PMEM_ID = B.PMEM_ID)
+		    INNER JOIN PRO_CREATE C ON (A.PRO_SN = C.PRO_SN)
+		WHERE B.EMEM_ID = #{ememId}
+	</select>
+	
+	
+	<delete id="deleteTaskBoard" parameterType="int">
+		DELETE FROM PRO_TASK
+		WHERE PROT_SN = #{protSn }
+	</delete>
+	
+</mapper>
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.commons.dao.MainDAO">
+	<select id="selectMainJobList" resultType="JobBoardVO">
+		WITH MAIN AS(SELECT A.*, ROWNUM RNUM
+					FROM (SELECT JOB_SN, JOB_TITLE, A.EMEM_ID, EMEM_NM, EMEM_PIC, JOB_DATE
+					    FROM JOB_BOARD A LEFT OUTER JOIN E_MEMBER B ON (A.EMEM_ID = B.EMEM_ID)
+					    ORDER BY JOB_DATE DESC) A)
+		SELECT MAIN.*
+		FROM MAIN
+		WHERE RNUM BETWEEN 1 AND 4
+	</select>
+	
+	<select id="selectMainProList" resultType="ProBoardVO">
+		WITH MAIN AS( SELECT A.*, ROWNUM RNUM
+					FROM (SELECT PROB_SN, PROB_TITLE, A.EMEM_ID, EMEM_NM, EMEM_PIC, PROB_DATE
+					    FROM PRO_BOARD A LEFT OUTER JOIN E_MEMBER B ON (A.EMEM_ID = B.EMEM_ID)
+					    ORDER BY PROB_DATE DESC) A)
+		SELECT MAIN.*
+		FROM MAIN
+		WHERE RNUM BETWEEN 1 AND 4
+	</select>
+	
+	<select id="selectReviewList1" resultType="MainVO">
+		WITH REVIEW AS ( SELECT A.*, ROWNUM RNUM
+		                FROM (SELECT A.EMEM_ID, EMEM_NM, REVIEW_COMMENT, REVIEW_DATE, COCE_DEPT_CD, D.COMM_NM COCE_NM
+		                    FROM COM_REVIEW A 
+		                        LEFT OUTER JOIN E_MEMBER B ON (A.EMEM_ID = B.EMEM_ID)
+		                        LEFT OUTER JOIN COM_CERTI C ON (A.COCE_SN = C.COCE_SN)
+		                        LEFT OUTER JOIN COMMON_MIDDLE D ON (C.COCE_DEPT_CD = D.COMM_CD)
+		                    ORDER BY REVIEW_DATE DESC) A)
+		SELECT REVIEW.*
+		FROM REVIEW
+		WHERE RNUM BETWEEN 1 AND 2
+	</select>
+	
+	<select id="selectReviewList2" resultType="MainVO">
+		WITH REVIEW AS ( SELECT A.*, ROWNUM RNUM
+		                FROM (SELECT A.EMEM_ID, EMEM_NM, REVIEW_COMMENT, REVIEW_DATE, COCE_DEPT_CD, D.COMM_NM COCE_NM
+		                    FROM COM_REVIEW A 
+		                        LEFT OUTER JOIN E_MEMBER B ON (A.EMEM_ID = B.EMEM_ID)
+		                        LEFT OUTER JOIN COM_CERTI C ON (A.COCE_SN = C.COCE_SN)
+		                        LEFT OUTER JOIN COMMON_MIDDLE D ON (C.COCE_DEPT_CD = D.COMM_CD)
+		                    ORDER BY REVIEW_DATE DESC) A)
+		SELECT REVIEW.*
+		FROM REVIEW
+		WHERE RNUM BETWEEN 3 AND 4
+	</select>
+</mapper>

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.contact.dao.ContactDAO">
+	
+	<sql id="searchFrag">
+       	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+       		<choose>
+       			<when test="simpleSearch.searchType eq 'content'">
+       				AND INSTR(CONTAC_BUYERN, #{simpleSearch.searchWord}) > 0
+       			</when>
+       			<when test="simpleSearch.searchType eq 'writer'">
+       				AND INSTR(CONTAC_PERS, #{simpleSearch.searchWord}) > 0
+       			</when>
+       			<otherwise>
+     					AND INSTR(CONTAC_PERS, #{simpleSearch.searchWord}) > 0
+     					OR INSTR(CONTAC_BUYERN, #{simpleSearch.searchWord}) > 0
+       			</otherwise>
+       		</choose>
+       	</if>
+	</sql>
+
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM CONTACT
+		WHERE EMEM_ID = #{detailSearch.ememId}
+		AND PRO_SN IS NULL
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectTotalRecordPro" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM CONTACT
+		WHERE PRO_SN = #{detailSearch.proSn}
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectContactList" parameterType="PagingVO" resultType="ContactVO">
+		WITH CONTACTORDER AS (
+			SELECT CONTAC_SN, CONTAC_BUYERN, CONTAC_NAME, CONTAC_PERS, 
+				CONTAC_POSI_CD, CONTAC_EMAIL, CONTAC_TEL, EMEM_ID, PRO_SN                 
+			FROM CONTACT
+			WHERE EMEM_ID = #{detailSearch.ememId}
+			AND PRO_SN IS NULL
+			<include refid="searchFrag" />
+<!-- 			ORDER BY 1 DESC -->
+		)
+		SELECT A.*
+		FROM(
+			SELECT CONTACTORDER.*, ROWNUM RNUM
+			FROM CONTACTORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectContactListPro" parameterType="PagingVO" resultType="ContactVO">
+		WITH CONTACTORDER AS (
+			SELECT CONTAC_SN, CONTAC_BUYERN, CONTAC_NAME, CONTAC_PERS, 
+				CONTAC_POSI_CD, CONTAC_EMAIL, CONTAC_TEL, EMEM_ID, PRO_SN                       
+			FROM CONTACT
+			WHERE PRO_SN = #{detailSearch.proSn}
+			<include refid="searchFrag" />
+<!-- 			ORDER BY 1 DESC -->
+		)
+		SELECT A.*
+		FROM(
+			SELECT CONTACTORDER.*, ROWNUM RNUM
+			FROM CONTACTORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectContact" parameterType="int" resultType="ContactVO">
+		SELECT
+		    CONTAC_SN,		    EMEM_ID,
+		    CONTAC_BUYERN,			    CONTAC_NAME,
+		    CONTAC_PERS,		    CONTAC_POSI_CD,		    CONTAC_EMAIL,
+		    CONTAC_TEL,		    CONTAC_BUYERA,
+		    CONTAC_BUYERT, CONTAC_BUYERP, PRO_SN
+		FROM CONTACT 
+		WHERE CONTAC_SN=#{contacSn}
+	</select>
+	
+	<insert id="insertContact" parameterType="ContactVO">
+	<selectKey resultType="int" keyProperty="contacSn" order="BEFORE">
+		SELECT SEQ_CONTACT.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO CONTACT (
+		    CONTAC_SN,
+		    EMEM_ID,
+		    CONTAC_BUYERN,
+		    CONTAC_NAME,
+		    CONTAC_PERS,
+		    CONTAC_POSI_CD,
+		    CONTAC_EMAIL,
+		    CONTAC_TEL,
+		    <if test="contacBuyera neq null and contacBuyera.length gt 0">
+		    CONTAC_BUYERA,
+		    </if>
+		    <if test="contacBuyert neq null and contacBuyert.length gt 0">
+		    CONTAC_BUYERT,
+		    </if>
+		    <if test="contacBuyerp neq null and contacBuyerp.length gt 0">
+		    CONTAC_BUYERP,
+		    </if>
+		    PRO_SN
+		) VALUES (
+		    #{contacSn,jdbcType=NUMERIC}
+		    , #{ememId,jdbcType=VARCHAR}
+		    , #{contacBuyern,jdbcType=VARCHAR}
+		    , #{contacName,jdbcType=VARCHAR}
+		    , #{contacPers,jdbcType=VARCHAR}
+		    , #{contacPosiCd,jdbcType=VARCHAR}
+		    , #{contacEmail,jdbcType=VARCHAR}
+		    , #{contacTel,jdbcType=VARCHAR}
+		    <if test="contacBuyera neq null and contacBuyera.length gt 0">
+		    , #{contacBuyera,jdbcType=VARCHAR}
+		    </if>
+		    <if test="contacBuyert neq null and contacBuyert.length gt 0">
+		    , #{contacBuyert,jdbcType=VARCHAR}
+		    </if>
+		    <if test="contacBuyerp neq null and contacBuyerp.length gt 0">
+		    , #{contacBuyerp,jdbcType=VARCHAR}
+		    </if>
+		    , #{proSn,jdbcType=NUMERIC}
+		)
+	</insert>
+	
+	<update id="updateContact" parameterType="ContactVO">
+		UPDATE CONTACT
+		SET
+			CONTAC_BUYERN = #{contacBuyern,jdbcType=VARCHAR}
+			, CONTAC_NAME = #{contacName,jdbcType=VARCHAR}
+			, CONTAC_PERS = #{contacPers,jdbcType=VARCHAR}
+			, CONTAC_POSI_CD = #{contacPosiCd,jdbcType=VARCHAR}
+			, CONTAC_EMAIL = #{contacEmail,jdbcType=VARCHAR}
+			, CONTAC_TEL = #{contacTel,jdbcType=VARCHAR}
+			, CONTAC_BUYERA = #{contacBuyera,jdbcType=VARCHAR}
+			, CONTAC_BUYERT = #{contacBuyert,jdbcType=VARCHAR}
+			, CONTAC_BUYERP = #{contacBuyerp,jdbcType=VARCHAR}
+		WHERE CONTAC_SN = #{contacSn}
+	</update>
+	<update id="updateContactPro" parameterType="ContactVO">
+		UPDATE CONTACT
+		SET
+			CONTAC_BUYERN = #{contacBuyern,jdbcType=VARCHAR}
+			, CONTAC_NAME = #{contacName,jdbcType=VARCHAR}
+			, CONTAC_PERS = #{contacPers,jdbcType=VARCHAR}
+			, CONTAC_POSI_CD = #{contacPosiCd,jdbcType=VARCHAR}
+			, CONTAC_EMAIL = #{contacEmail,jdbcType=VARCHAR}
+			, CONTAC_TEL = #{contacTel,jdbcType=VARCHAR}
+			, CONTAC_BUYERA = #{contacBuyera,jdbcType=VARCHAR}
+			, CONTAC_BUYERT = #{contacBuyert,jdbcType=VARCHAR}
+			, CONTAC_BUYERP = #{contacBuyerp,jdbcType=VARCHAR}
+			, PRO_SN = #{proSn,jdbcType=VARCHAR}
+		WHERE CONTAC_SN = #{contacSn}
+	</update>
+	
+	<delete id="deleteContact" parameterType="ContactVO">
+		DELETE FROM CONTACT
+		WHERE CONTAC_SN = #{contacSn}
+	</delete>
+	
+</mapper>

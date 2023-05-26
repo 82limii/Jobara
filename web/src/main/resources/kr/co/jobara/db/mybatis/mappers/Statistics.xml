@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.statistics.dao.StatisticsDAO">
+	<select id="selectEdiSnJobList" parameterType="int" resultType="StatisticsVO">
+		WITH T AS(
+		    SELECT A.RE_SN, B.EDI_SN
+		    FROM APPLY A, EDUCATION B
+		    WHERE 1 = 1
+		    AND   A.JOB_SN = #{jobSn}
+		    AND   A.RE_SN = B.RE_SN
+		)
+		SELECT X.EDI_SN, COUNT(X.RE_SN) EDI_CNT, COMM_NM EDI_NM
+		FROM   T X, COMMON_MIDDLE B
+		WHERE  X.EDI_SN = (
+		            SELECT MAX(Y.EDI_SN)
+		            FROM   T Y
+		            WHERE  Y.RE_SN = X.RE_SN
+		        )
+		        AND X.EDI_SN = B.COMM_CD
+		GROUP BY X.EDI_SN , COMM_NM
+	</select>
+	
+	<select id="selectEdiSnProList" parameterType="int" resultType="StatisticsVO">
+		WITH T AS(
+		    SELECT A.RE_SN, B.EDI_SN
+		    FROM APPLY A, EDUCATION B
+		    WHERE 1 = 1
+		    AND   A.PROB_SN = #{probSn}
+		    AND   A.RE_SN = B.RE_SN
+		)
+		SELECT X.EDI_SN, COUNT(X.RE_SN) EDI_CNT, COMM_NM EDI_NM
+		FROM   T X, COMMON_MIDDLE B
+		WHERE  X.EDI_SN = (
+		            SELECT MAX(Y.EDI_SN)
+		            FROM   T Y
+		            WHERE  Y.RE_SN = X.RE_SN
+		        )
+		        AND X.EDI_SN = B.COMM_CD
+		GROUP BY X.EDI_SN , COMM_NM
+	</select>
+	
+	<select id="selectEduDiv" resultType="StatisticsVO">
+		SELECT COMM_CD EDI_SN, COMM_NM EDI_NM
+		FROM COMMON_MIDDLE
+		WHERE COMM_CD LIKE 'SCH%'
+	</select>
+	
+	<select id="selectYearCntJob" parameterType="int" resultType="StatisticsVO">
+		SELECT A.RE_SN, TRUNC(SUM(DAY)/365) YEAR_CNT
+		FROM (  SELECT A.RE_SN, TO_NUMBER(TO_DATE(CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(CAR_STARTD,'YYYY-MM-DD')) DAY
+		        FROM APPLY A, CAREER B
+		        WHERE 1 = 1
+		            AND   A.JOB_SN = #{jobSn}
+		            AND   A.RE_SN = B.RE_SN
+		) A
+		GROUP BY A.RE_SN
+	</select>
+	
+	<select id="selectYearCntPro" parameterType="int" resultType="StatisticsVO">
+		SELECT A.RE_SN, TRUNC(SUM(DAY)/365) YEAR_CNT
+		FROM (  SELECT A.RE_SN, TO_NUMBER(TO_DATE(CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(CAR_STARTD,'YYYY-MM-DD')) DAY
+		        FROM APPLY A, CAREER B
+		        WHERE 1 = 1
+		            AND   A.PROB_SN = #{probSn}
+		            AND   A.RE_SN = B.RE_SN
+		) A
+		GROUP BY A.RE_SN
+	</select>
+	
+	<select id="selectApplyCntJob" parameterType="int" resultType="StatisticsVO">
+		SELECT COUNT(RE_SN) APP_CNT
+		FROM APPLY
+		WHERE JOB_SN = #{jobSn}
+	</select>
+	
+	<select id="selectApplyCntPro" parameterType="int" resultType="StatisticsVO">
+		SELECT COUNT(RE_SN) APP_CNT
+		FROM APPLY
+		WHERE PROB_SN = #{probSn}
+	</select>
+</mapper>

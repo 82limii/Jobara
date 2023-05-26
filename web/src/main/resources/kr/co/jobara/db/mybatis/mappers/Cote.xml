@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.cote.dao.CoteDAO">
+	<select id="selectCote" resultType="CoteVO" parameterType="int">
+		SELECT COTE_SN
+			COTE_SN
+			, CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, COTE_HIGH
+			, B.COMM_NM
+			, COTE_REVIEW
+			, COTE_DATE
+			, COTE_TITLE
+		FROM COTE A      
+            LEFT OUTER JOIN COMMON_MIDDLE B ON (A.COTE_HIGH = B.COMM_CD)                       
+		WHERE COTE_SN = #{coteSn} 
+	</select>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM COTE
+		WHERE 
+			EMEM_ID = #{ememId} 
+	</select>
+	
+	
+	<select id="selectCoteList" parameterType="PagingVO" resultType="CoteVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT
+		        	COTE_SN
+					, CERTI_SN
+					, PMEM_ID
+					, EMEM_ID
+					, COTE_HIGH
+					, COTE_REVIEW
+					, COTE_DATE
+					, COTE_TITLE
+				FROM
+				    COTE
+				WHERE 
+					EMEM_ID = #{ememId}
+		        ]]>
+                ORDER BY REVIEW_SN DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	<insert id="insertCote" parameterType="CoteVO">
+	<selectKey resultType="int" keyProperty="coteSn" order="BEFORE">
+		SELECT SEQ_COTE.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO COTE (
+		    COTE_SN
+			, CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, COTE_HIGH
+			, COTE_REVIEW
+			, COTE_DATE
+			, COTE_TITLE
+		) VALUES (
+			 #{coteSn,jdbcType=NUMERIC}
+			, #{certiSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{coteHigh,jdbcType=VARCHAR}
+			, #{coteReview,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+			, #{coteTitle,jdbcType=VARCHAR}
+			
+		)   
+	</insert>
+	<update id="updateCote" parameterType="CoteVO">
+		UPDATE COTE
+		SET
+			COTE_TITLE= #{coteTitle,jdbcType=VARCHAR}
+			, COTE_SN= #{coteSn,jdbcType=NUMERIC}
+			, CERTI_SN= #{certiSn,jdbcType=NUMERIC}
+			, PMEM_ID= #{pmemId,jdbcType=VARCHAR}
+			, EMEM_ID= #{ememId,jdbcType=VARCHAR}
+			, COTE_HIGH= #{coteHigh,jdbcType=VARCHAR}
+			, COTE_REVIEW= #{coteReview,jdbcType=VARCHAR}
+			, COTE_DATE= #{coteDate,jdbcType=VARCHAR}
+		WHERE COTE_SN= #{coteSn,jdbcType=NUMERIC}
+	</update>
+</mapper>

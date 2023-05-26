@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.company.dao.ComReviewDAO">
+	<select id="selectComReview" resultType="ComReviewVO" parameterType="int">
+		SELECT REVIEW_SN
+			, COCE_SN
+			, PMEM_ID
+			, EMEM_ID
+			, REVIEW_ADV
+			, REVIEW_DISADV
+			, REVIEW_COMMENT
+			, RATING_SN
+			, REVIEW_DATE
+		FROM COM_REVIEW                       
+		WHERE REVIEW_SN = #{reviewSn} 
+	</select>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM COM_REVIEW
+	</select>
+	
+	
+	<select id="selectComReviewList" parameterType="PagingVO" resultType="ComReviewVO">
+		SELECT B.*
+FROM (
+    SELECT A.*, ROWNUM RNUM
+    FROM (
+            SELECT
+            
+                A.REVIEW_SN
+                , A.COCE_SN
+                , A.PMEM_ID
+                , A.EMEM_ID
+                , A.REVIEW_ADV
+                , A.REVIEW_DISADV
+                , A.REVIEW_COMMENT
+                , A.RATING_SN
+                , A.REVIEW_DATE
+                , B.COCE_STATE
+                , B.COCE_DEPT_CD
+                , C.COMM_NM RAT
+                , D.COMM_NM STAE
+                , E.COMM_NM DEPT
+            FROM
+                COM_REVIEW A
+                LEFT OUTER JOIN COM_CERTI B 
+                    ON A.COCE_SN = B.COCE_SN
+                LEFT OUTER JOIN COMMON_MIDDLE C
+                    ON A.RATING_SN = C.COMM_CD
+                LEFT OUTER JOIN COMMON_MIDDLE D
+                    ON B.COCE_STATE = D.COMM_CD
+                LEFT OUTER JOIN COMMON_MIDDLE E
+                    ON B.COCE_DEPT_CD = E.COMM_CD
+            WHERE
+                A.EMEM_ID = #{detailSearch.ememId}
+            ORDER BY A.REVIEW_SN DESC
+            ) A
+		) B
+		<![CDATA[
+			WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+		]]>
+	</select>
+	<insert id="insertComReview" parameterType="ComReviewVO">
+	<selectKey resultType="int" keyProperty="reviewSn" order="BEFORE">
+		SELECT SEQ_COM_REVIEW.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO COM_REVIEW (
+		    REVIEW_SN
+			, COCE_SN
+			, PMEM_ID
+			, EMEM_ID
+			, REVIEW_ADV
+			, REVIEW_DISADV
+			, REVIEW_COMMENT
+			, RATING_SN
+			, REVIEW_DATE
+		) VALUES (
+			#{reviewSn,jdbcType=NUMERIC}
+			, #{coceSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{reviewAdv,jdbcType=VARCHAR}
+			, #{reviewDisadv,jdbcType=VARCHAR}
+		  	, #{reviewComment,jdbcType=VARCHAR}
+			, #{ratingSn,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+			
+		)   
+	</insert>
+	<update id="updateComReview" parameterType="ComReviewVO">
+		UPDATE COM_REVIEW
+		SET
+			REVIEW_SN= #{reviewSn,jdbcType=NUMERIC}
+			, COCE_SN= #{coceSn,jdbcType=NUMERIC}
+			, PMEM_ID= #{pmemId,jdbcType=VARCHAR}
+			, EMEM_ID= #{ememId,jdbcType=VARCHAR}
+			, REVIEW_ADV= #{reviewAdv,jdbcType=VARCHAR}
+			, REVIEW_DISADV= #{reviewDisadv,jdbcType=VARCHAR}
+			, RATING_SN= #{ratingSn,jdbcType=VARCHAR}
+			, REVIEW_DATE= #{reviewDate,jdbcType=VARCHAR}
+		WHERE REVIEW_SN = #{reviewSn,jdbcType=NUMERIC}
+	</update>
+</mapper>

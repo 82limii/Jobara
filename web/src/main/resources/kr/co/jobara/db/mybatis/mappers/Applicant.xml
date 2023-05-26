@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.applicant.dao.ApplicantDAO">
+	
+	<select id="selectJobTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM JOB_BOARD
+		WHERE EMEM_ID = #{detailSearch.ememId}
+	</select>
+	
+	<select id="selectProTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PRO_BOARD
+		WHERE EMEM_ID = #{detailSearch.ememId}
+	</select>
+	
+	<select id="selectJobManTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM JOB_BOARD
+		WHERE JOB_SN = #{detailSearch.jobSn}
+	</select>
+	
+	<select id="selectProManTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PRO_BOARD
+		WHERE PROB_SN = #{detailSearch.probSn}
+	</select>
+	
+<!-- 	<select id="selectProTotalRecord" parameterType="PagingVO" resultType="int"> -->
+<!-- 		SELECT COUNT(*) -->
+<!-- 		FROM PRO_BOARD -->
+<!-- 		WHERE EMEM_ID = #{detailSearch.ememId} -->
+<!-- 	</select> -->
+	
+	<select id="selectJobApplicantList" parameterType="PagingVO" resultType="JobBoardVO">
+		WITH APPLICNATORDER AS (
+			SELECT JOB_SN, EMEM_ID, JOB_TITLE,
+		           JOB_STARTD, JOB_ENDD, A.COMM_NM JOB_DEPT_CD                    
+			 FROM JOB_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (JOB_BOARD.JOB_DEPT_CD = A.COMM_CD)
+		            WHERE EMEM_ID = #{detailSearch.ememId}
+		            <![CDATA[
+		            AND SYSDATE < TO_DATE(JOB_ENDD) 
+		            ]]>
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLICNATORDER.*, ROWNUM RNUM
+			FROM APPLICNATORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectJobApplicantListEnd" parameterType="PagingVO" resultType="JobBoardVO">
+		WITH APPLICNATORDER AS (
+			SELECT JOB_SN, EMEM_ID, JOB_TITLE,
+		           JOB_STARTD, JOB_ENDD, A.COMM_NM JOB_DEPT_CD 
+			FROM JOB_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (JOB_BOARD.JOB_DEPT_CD = A.COMM_CD)
+		            WHERE EMEM_ID = #{detailSearch.ememId}
+		            <![CDATA[
+		            AND SYSDATE > TO_DATE(JOB_ENDD) 
+		            ]]>
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLICNATORDER.*, ROWNUM RNUM
+			FROM APPLICNATORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectProApplicantList" parameterType="PagingVO" resultType="ProBoardVO">
+		WITH APPLICNATORDER AS (
+			SELECT PROB_SN, EMEM_ID, PROB_TITLE,
+		           PROB_RSTARTD, PROB_RENDD, A.COMM_NM PROB_DEPT_CD                    
+			FROM PRO_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (PRO_BOARD.PROB_DEPT_CD = A.COMM_CD)
+		    WHERE EMEM_ID = #{detailSearch.ememId}
+		          <![CDATA[
+		          AND SYSDATE < TO_DATE(PROB_RENDD) 
+		          ]]>
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLICNATORDER.*, ROWNUM RNUM
+			FROM APPLICNATORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectProApplicantListEnd" parameterType="PagingVO" resultType="ProBoardVO">
+		WITH APPLICNATORDER AS (
+			SELECT PROB_SN, EMEM_ID, PROB_TITLE,
+		           PROB_RSTARTD, PROB_RENDD, A.COMM_NM PROB_DEPT_CD                    
+			FROM PRO_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (PRO_BOARD.PROB_DEPT_CD = A.COMM_CD)
+		    WHERE EMEM_ID = #{detailSearch.ememId}
+		          <![CDATA[
+		          AND SYSDATE > TO_DATE(PROB_RENDD) 
+		          ]]>
+		)
+		SELECT A.*
+		FROM(
+			SELECT APPLICNATORDER.*, ROWNUM RNUM
+			FROM APPLICNATORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectJobApplicantManList" parameterType="PagingVO" resultType="JobBoardVO">
+		WITH RESUMEORDER AS (
+		    SELECT D.PMEM_NM, 
+		           G.COMM_NM AS EDI_SN,
+		           TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/365) JOB_YEAR,
+		           TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/30.5)
+		                 - TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/365)*12 JOB_MONTH,
+		           C.RE_TITLE,
+		           B.RE_SN
+		    FROM JOB_BOARD A LEFT OUTER JOIN APPLY B ON(A.JOB_SN = B.JOB_SN) 
+                    LEFT OUTER JOIN RESUME C ON (B.RE_SN = C.RE_SN) 
+                    LEFT OUTER JOIN P_MEMBER D ON (C.PMEM_ID = D.PMEM_ID) 
+                    LEFT OUTER JOIN EDUCATION E ON (C.RE_SN = E.RE_SN)
+                    LEFT OUTER JOIN CAREER F ON (C.RE_SN = F.RE_SN)
+                    LEFT OUTER JOIN COMMON_MIDDLE G ON (E.EDI_SN = G.COMM_CD)
+		    WHERE A.JOB_SN = #{detailSearch.jobSn}
+		)
+		SELECT A.*
+		FROM(
+		    SELECT RESUMEORDER.*, ROWNUM RNUM
+		    FROM RESUMEORDER
+		    ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectJobApplicant" parameterType="int" resultType="JobBoardVO">
+		SELECT JOB_SN, JOB_TITLE,
+		       JOB_STARTD, JOB_ENDD, A.COMM_NM JOB_DEPT_CD
+		FROM JOB_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (JOB_BOARD.JOB_DEPT_CD = A.COMM_CD)
+		WHERE JOB_SN = #{jobSn}
+	</select>
+	
+	<select id="selectProApplicantManList" parameterType="PagingVO" resultType="ProBoardVO">
+		WITH RESUMEORDER AS (
+		    SELECT D.PMEM_NM, 
+		           G.COMM_NM AS EDI_SN,
+		           TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/365) JOB_YEAR,
+		           TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/30.5)
+		                 - TRUNC(TO_NUMBER(TO_DATE(F.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(F.CAR_STARTD,'YYYY-MM-DD'))/365)*12 JOB_MONTH,
+		           C.RE_TITLE,
+		           B.RE_SN
+		    FROM PRO_BOARD A LEFT OUTER JOIN APPLY B ON(A.PROB_SN = B.PROB_SN) 
+                    LEFT OUTER JOIN RESUME C ON (B.RE_SN = C.RE_SN) 
+                    LEFT OUTER JOIN P_MEMBER D ON (C.PMEM_ID = D.PMEM_ID) 
+                    LEFT OUTER JOIN EDUCATION E ON (C.RE_SN = E.RE_SN)
+                    LEFT OUTER JOIN CAREER F ON (C.RE_SN = F.RE_SN)
+                    LEFT OUTER JOIN COMMON_MIDDLE G ON (E.EDI_SN = G.COMM_CD)
+		    WHERE A.PROB_SN = #{detailSearch.probSn}
+		)
+		SELECT A.*
+		FROM(
+		    SELECT RESUMEORDER.*, ROWNUM RNUM
+		    FROM RESUMEORDER
+		    ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectProApplicant" parameterType="int" resultType="ProBoardVO">
+		SELECT PROB_SN, PROB_TITLE,
+		       PROB_RSTARTD, PROB_RENDD, A.COMM_NM PROB_DEPT_CD
+		FROM PRO_BOARD LEFT OUTER JOIN COMMON_MIDDLE A ON (PRO_BOARD.PROB_DEPT_CD = A.COMM_CD)
+		WHERE PROB_SN = #{probSn}
+	</select>
+	
+	<insert id="insertIncumbent" parameterType="IncumbentVO">
+	<selectKey resultType="int" keyProperty="empSn" order="BEFORE">
+		SELECT SEQ_EMP_INFO.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO EMP_INFO (
+		    EMP_SN
+		    , PMEM_ID
+		    , EMP_STATE_CD
+		    , EMEM_ID
+		    , EMP_STARTD
+		    , EMP_ENDD
+		    , EMP_POSI_CD
+		    , EMP_DEPT_CD
+		    , EMP_SALARY
+		) VALUES (
+		    #{empSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, 'TEN02'
+			, #{ememId,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{empEndd,jdbcType=VARCHAR}
+			, #{empPosiCd,jdbcType=VARCHAR}
+			, #{empDeptCd,jdbcType=VARCHAR}
+			, #{empSalary,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<delete id="deleteApplicantMan" parameterType="ApplyVO">
+		DELETE FROM APPLY
+		WHERE APP_SN = #{appSn}
+	</delete>
+	
+	<select id="selectJobApplicantMan" parameterType="int" resultType="JobBoardVO">
+		SELECT B.PMEM_NM, 
+		       E.COMM_NM AS EDI_SN,
+		       TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/365) JOB_YEAR,
+		       TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/30.5)
+		             - TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/365)*12 JOB_MONTH,
+		       A.RE_TITLE,
+       		   F.APP_SN,
+       		   B.PMEM_ID,
+       		   A.RE_SN
+		FROM RESUME A LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID) 
+            LEFT OUTER JOIN EDUCATION C ON (A.RE_SN = C.RE_SN) 
+            LEFT OUTER JOIN CAREER D ON (A.RE_SN = D.RE_SN) 
+            LEFT OUTER JOIN COMMON_MIDDLE E ON (C.EDI_SN = E.COMM_CD)
+            LEFT OUTER JOIN APPLY F ON (A.RE_SN = F.RE_SN)
+		WHERE F.JOB_SN IS NOT NULL
+		  AND A.RE_SN = #{reSn}
+	</select>
+	
+	<select id="selectProApplicantMan" parameterType="int" resultType="ProBoardVO">
+		SELECT B.PMEM_NM, 
+		       E.COMM_NM AS EDI_SN,
+		       TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/365) JOB_YEAR,
+		       TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/30.5)
+		             - TRUNC(TO_NUMBER(TO_DATE(D.CAR_ENDD, 'YYYY-MM-DD') - TO_DATE(D.CAR_STARTD,'YYYY-MM-DD'))/365)*12 JOB_MONTH,
+		       A.RE_TITLE,
+       		   F.APP_SN,
+       		   B.PMEM_ID,
+       		   A.RE_SN
+		FROM RESUME A LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID) 
+            LEFT OUTER JOIN EDUCATION C ON (A.RE_SN = C.RE_SN) 
+            LEFT OUTER JOIN CAREER D ON (A.RE_SN = D.RE_SN) 
+            LEFT OUTER JOIN COMMON_MIDDLE E ON (C.EDI_SN = E.COMM_CD)
+            LEFT OUTER JOIN APPLY F ON (A.RE_SN = F.RE_SN)
+		WHERE F.PROB_SN IS NOT NULL
+		  AND A.RE_SN = #{reSn}
+	</select>
+	
+</mapper>

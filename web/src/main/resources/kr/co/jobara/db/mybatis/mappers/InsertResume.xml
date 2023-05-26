@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.resume.dao.ResumeDAO">
+	<insert id="insertResume" parameterType="ResumeVO">
+		<selectKey resultType="int" keyProperty="reSn" order="BEFORE">
+			SELECT SEQ_RESUME.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO RESUME (
+		    RE_SN
+		    , PMEM_ID
+		    , RE_TITLE
+		    , RE_STACK
+		    , RE_INT
+		    , RE_DATE
+		    <if test="photoUrl neq null and photoUrl.length gt 0">
+		    , PHOTO_URL
+		    </if>
+		    <if test="portSn neq null and portSn gt 0">
+		    , PORT_SN
+		    </if>
+		    
+		) VALUES (
+			#{reSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{reTitle,jdbcType=VARCHAR}
+			, #{reStack,jdbcType=VARCHAR}
+			, #{reInt,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+		    <if test="photoUrl neq null and photoUrl.length gt 0">
+			, #{photoUrl,jdbcType=VARCHAR}
+			</if>
+		    <if test="portSn neq null and portSn gt 0">
+			, #{portSn,jdbcType=NUMERIC}
+		    </if>
+		)
+	</insert>
+	
+	<insert id="insertEducation" parameterType="EducationVO">
+		<selectKey resultType="int" keyProperty="eduSn" order="BEFORE">
+			SELECT SEQ_EDUCATION.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO EDUCATION (
+		    EDU_SN
+		    , RE_SN
+		    , EDI_SN
+		    , EDU_NAME
+		    <if test="eduMajor neq null and eduMajor.length gt 0">
+		    , EDU_MAJOR
+		    </if>
+		    , EDU_SDATE
+		    , EDU_EDATE
+		    , EDU_STATE
+		    <if test="eduScore neq null and eduScore.length gt 0">
+		    , EDU_SCORE
+		    </if>
+		    <if test="attSn neq null and attSn gt 0">
+		    , ATT_SN
+		    </if>
+		    <if test="eduEnter neq null and eduEnter.length gt 0">
+		    , EDU_ENTER
+		    </if>
+		) VALUES (
+			#{eduSn,jdbcType=NUMERIC}
+			, #{reSn,jdbcType=NUMERIC}
+			, #{ediSn,jdbcType=VARCHAR}
+			, #{eduName,jdbcType=VARCHAR}
+		    <if test="eduMajor neq null and eduMajor.length gt 0">
+			, #{eduMajor,jdbcType=VARCHAR}
+			</if>
+			, #{eduSdate,jdbcType=VARCHAR}
+			, #{eduEdate,jdbcType=VARCHAR}
+			, #{eduState,jdbcType=VARCHAR}
+		    <if test="eduScore neq null and eduScore.length gt 0">
+			, #{eduScore,jdbcType=VARCHAR}
+			</if>
+		    <if test="attSn neq null and attSn gt 0">
+			, #{attSn,jdbcType=VARCHAR}
+		    </if>
+		    <if test="eduEnter neq null and eduEnter.length gt 0">
+			, #{eduEnter,jdbcType=VARCHAR}
+			</if>
+		)
+	</insert>
+	
+	<insert id="insertCareer" parameterType="CareerVO">
+		<selectKey resultType="int" keyProperty="carSn" order="BEFORE">
+			SELECT SEQ_CAREER.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO CAREER (
+		    CAR_SN
+		    , RE_SN
+		    , CAR_ENTER
+		    , CAR_DEPARTMENT
+		    , CAR_STARTD
+		    , CAR_DEPT_CD
+		    , CAR_POSI_CD
+		    , CAR_PAY
+		    , CAR_TASK
+		    <if test="carDescription neq null and carDescription.length gt 0">
+		    , CAR_DESCRIPTION
+		    </if>
+		    <if test="carEndd neq null and carEndd.length gt 0">
+		    , CAR_ENDD
+		    </if>
+		) VALUES (
+		    #{carSn,jdbcType=NUMERIC}
+			, #{reSn,jdbcType=NUMERIC}
+			, #{carEnter,jdbcType=VARCHAR}
+			, #{carDepartment,jdbcType=VARCHAR}
+			, #{carStartd,jdbcType=VARCHAR}
+			, #{carDeptCd,jdbcType=VARCHAR}
+			, #{carPosiCd,jdbcType=VARCHAR}
+			, #{carPay,jdbcType=VARCHAR}
+			, #{carTask,jdbcType=VARCHAR}
+		    <if test="carDescription neq null and carDescription.length gt 0">
+			, #{carDescription,jdbcType=VARCHAR}
+			</if>
+		    <if test="carEndd neq null and carEndd.length gt 0">
+			, #{carEndd,jdbcType=VARCHAR}
+			</if>
+		)
+	</insert>
+	<insert id="insertActivity" parameterType="ActivityVO">
+		<selectKey resultType="int" keyProperty="actSn" order="BEFORE">
+			SELECT SEQ_ACTIVITY.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO ACTIVITY (
+		    ACT_SN
+		    , RE_SN
+		    , ACT_COMB
+		    , ACT_NM
+		    , ACT_STARTD
+		    , ACT_ENDD
+		    , ACT_CONTENTS
+		) VALUES (
+		    #{actSn,jdbcType=VARCHAR}
+		    , #{reSn,jdbcType=NUMERIC}
+		    , #{actComb,jdbcType=VARCHAR}
+		    , #{actNm,jdbcType=VARCHAR}
+		    , #{actStartd,jdbcType=VARCHAR}
+		    , #{actEndd,jdbcType=VARCHAR}
+		    , #{actContents,jdbcType=VARCHAR}
+		)
+	</insert>
+	<insert id="insertSchool" parameterType="SchoolVO">
+		<selectKey resultType="int" keyProperty="schSn" order="BEFORE">
+			SELECT SEQ_SCHOOL.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO SCHOOL (
+		    SCH_SN
+		    , RE_SN
+		    , SCH_NM
+		    , SCH_INT
+		    , SCH_STARTD
+		    , SCH_ENDD
+		    , SCH_CONTENTS
+		) VALUES (
+		    #{schSn,jdbcType=NUMERIC}
+		    , #{reSn,jdbcType=NUMERIC}
+		    , #{schNm,jdbcType=VARCHAR}
+		    , #{schInt,jdbcType=VARCHAR}
+		    , #{schStartd,jdbcType=VARCHAR}
+		    , #{schEndd,jdbcType=VARCHAR}
+		    , #{schContents,jdbcType=VARCHAR}
+		)
+	</insert>
+	<insert id="insertConditions" parameterType="ConditionsVO">
+		<selectKey resultType="int" keyProperty="condiSn" order="BEFORE">
+			SELECT SEQ_CONDITIONS.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO CONDITIONS (
+		    CONDI_SN
+		    , RE_SN
+		    , CONDI_SHAPE
+		    , CONDI_PLACE
+		    , CONDI_DUTY
+		) VALUES (
+		    #{condiSn,jdbcType=NUMERIC}
+		    , #{reSn,jdbcType=NUMERIC}
+		    , #{condiShape,jdbcType=VARCHAR}
+		    , #{condiPlace,jdbcType=VARCHAR}
+		    , #{condiDuty,jdbcType=VARCHAR}
+		)
+	</insert>
+	<insert id="insertLanguage" parameterType="LanguageVO">
+		<selectKey resultType="int" keyProperty="langSn" order="BEFORE">
+			SELECT SEQ_LANGUAGE.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO LANGUAGE (
+		    LANG_SN
+		    , RE_SN
+		    , LANG_DIVI_CD
+		    , LANG_NM
+		    <if test="langTest neq null and langTest.length gt 0">
+		    , LANG_TEST
+		    </if>
+		    <if test="langScore neq null and langScore.length gt 0">
+		    , LANG_SCORE
+		    </if>
+		    <if test="langDate neq null and langDate.length gt 0">
+		    , LANG_DATE
+		    </if>
+		    <if test="langConCd neq null and langConCd.length gt 0">
+		    , LANG_CON_CD
+		    </if>
+		) VALUES (
+		    #{langSn,jdbcType=NUMERIC}
+		    , #{reSn,jdbcType=NUMERIC}
+		    , #{langDiviCd,jdbcType=VARCHAR}
+		    , #{langNm,jdbcType=VARCHAR}
+		    <if test="langTest neq null and langTest.length gt 0">
+		    , #{langTest,jdbcType=VARCHAR}
+		    </if>
+		    <if test="langScore neq null and langScore.length gt 0">
+		    , #{langScore,jdbcType=VARCHAR}
+		    </if>
+		    <if test="langDate neq null and langDate.length gt 0">
+		    , #{langDate,jdbcType=VARCHAR}
+		    </if>
+		    <if test="langConCd neq null and langConCd.length gt 0">
+		    , #{langConCd,jdbcType=VARCHAR}
+		    </if>
+		)
+	</insert>
+	<insert id="insertLicense" parameterType="LicenseVO">
+		<selectKey resultType="int" keyProperty="licSn" order="BEFORE">
+			SELECT SEQ_LICENSE.NEXTVAL
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO LICENSE (
+		    LIC_SN
+		    , RE_SN
+		    , LIC_NM
+		    , LIC_INT
+		    , LIC_DATE
+		) VALUES (
+		    #{licSn,jdbcType=NUMERIC}
+		    , #{reSn,jdbcType=NUMERIC}
+		    , #{licNm,jdbcType=VARCHAR}
+		    , #{licInt,jdbcType=VARCHAR}
+		    , #{licDate,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+</mapper>

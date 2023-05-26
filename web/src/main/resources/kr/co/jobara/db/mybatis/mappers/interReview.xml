@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.review.inter.dao.InterDAO">
+	<select id="selectInter" resultType="InterVO" parameterType="int">
+		SELECT INTER_SN
+			INTER_SN
+			, CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, INTER_COMB
+			, B.COMM_NM
+			, INTER_LATER
+			, INTER_QNA
+			, INTER_DATE
+			, INTER_ANS
+			, INTER_TITLE
+		FROM INTERVIEW A   
+			LEFT OUTER JOIN COMMON_MIDDLE B ON (A.INTER_COMB = B.COMM_CD)                    
+		WHERE INTER_SN = #{interSn} 
+	</select>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM INTER
+	</select>
+	
+	
+	<select id="selectInterList" parameterType="PagingVO" resultType="InterVO">
+		SELECT B.*
+		FROM (
+		    SELECT A.*, ROWNUM RNUM
+		    FROM (
+		    	<![CDATA[
+		        SELECT
+		        	INTER_SN
+					, CERTI_SN
+					, PMEM_ID
+					, EMEM_ID
+					, INTER_COMB
+					, INTER_LATER
+					, INTER_QNA
+					, INTER_DATE
+					, INTER_ANS
+					, INTER_TITLE
+				FROM 
+					INTERVIEW 
+		        ]]>
+                ORDER BY INTER_SN DESC
+		    ) A
+		) B
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	<insert id="insertInter" parameterType="InterVO">
+	<selectKey resultType="int" keyProperty="interSn" order="BEFORE">
+		SELECT SEQ_INTERVIEW.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO INTERVIEW (
+		    INTER_SN
+			, CERTI_SN
+			, PMEM_ID
+			, EMEM_ID
+			, INTER_TITLE
+			, INTER_COMB
+			, INTER_LATER
+			, INTER_QNA
+			, INTER_DATE
+			, INTER_ANS
+		) VALUES (
+			#{interSn,jdbcType=NUMERIC}
+			, #{certiSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			, #{ememId,jdbcType=VARCHAR}
+			, #{interTitle,jdbcType=VARCHAR}
+			, #{interComb,jdbcType=VARCHAR}
+			, #{interLater,jdbcType=VARCHAR}
+			, #{interQna,jdbcType=VARCHAR}
+			, #{interDate,jdbcType=VARCHAR}
+			, #{interAns,jdbcType=VARCHAR}
+			
+		)   
+	</insert>
+
+</mapper>

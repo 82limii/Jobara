@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.portfolio.dao.PortfolioDAO">
+	
+	
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM PORTFOLIO
+		WHERE PMEM_ID = #{pmemId}
+	</select>
+	
+	<select id="selectPortfolioList" parameterType="PagingVO" resultType="PortfolioVO">
+		WITH PORTFOLIOORDER AS (
+			SELECT 
+				A.PORT_SN
+				, A.ATT_SN
+				, A.PMEM_ID
+                , B.ATT_NM
+                , B.ATT_SIZE
+                , B.ATT_DATE
+			FROM PORTFOLIO A, ATTATCH B
+            WHERE 
+                A.ATT_SN = B.ATT_SN
+            AND
+				A.PMEM_ID = #{pmemId, jdbcType=VARCHAR}
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT PORTFOLIOORDER.*, ROWNUM RNUM
+			FROM PORTFOLIOORDER
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	
+	<insert id="insertPortfolio" parameterType="PortfolioVO">
+	<selectKey resultType="int" keyProperty="portSn" order="BEFORE">
+		SELECT SEQ_PORTFOLIO.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO PORTFOLIO (
+		    PORT_SN
+			, ATT_SN
+			, PMEM_ID
+		) VALUES (
+			#{portSn,jdbcType=NUMERIC}
+			, #{attSn,jdbcType=VARCHAR}
+			, #{pmemId,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<delete id="deletePortfolio" parameterType="PortfolioVO">
+			DELETE 
+			FROM 
+				PORTFOLIO
+			WHERE
+			    PORT_SN = #{portSn,jdbcType=NUMERIC}
+	</delete>
+	
+</mapper>

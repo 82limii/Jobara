@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.pms.project.dao.ProMemberDAO">
+
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM MEMBER A
+		    LEFT OUTER JOIN P_MEMBER B ON(A.PMEM_ID = B.PMEM_ID)
+	</select>
+	
+	<select id="selectProMemberList" parameterType="PagingVO" resultType="ProMemberVO">
+			SELECT A.PRO_SN, A.PMEM_ID, A.MEM_POSITION, A.MEM_EMAIL
+			    , A.MEM_TEL, A.MEM_FREE, A.MEM_STATE ,B.PRO_NAME, C.PMEM_NM
+			FROM MEMBER A
+			 INNER JOIN PRO_CREATE B ON(A.PRO_SN = B.PRO_SN)
+			 LEFT OUTER JOIN P_MEMBER C ON(A.PMEM_ID = C.PMEM_ID)
+	</select>
+	
+	<select id="selectApplyMemberList" parameterType="int" resultType="ProBoardVO">
+		SELECT 
+			A.PMEM_ID,  A.PMEM_NM, A.PMEM_TEL,
+		    A.PMEM_EMAIL, A.PMEM_PIC, B.RE_SN,
+		    B.RE_TITLE, C.PROB_SN
+		FROM P_MEMBER A
+		    LEFT OUTER JOIN RESUME B ON(A.PMEM_ID = B.PMEM_ID)
+		    INNER JOIN APPLY C ON(B.RE_SN = C.RE_SN)
+		    INNER JOIN PRO_BOARD D ON(C.PROB_SN = D.PROB_SN)
+		WHERE C.PROB_SN = #{probSn}
+	</select>
+	
+	
+	<insert id="multiInsertProMember" parameterType="ProMemberVO">
+		<selectKey resultType="int" keyProperty="proSn" order="BEFORE">
+			SELECT MAX(PRO_SN)
+			FROM PRO_CREATE
+		</selectKey>
+		INSERT ALL
+		    INTO MEMBER (
+		       PRO_SN,
+		       PMEM_ID,
+		       MEM_EMAIL,
+		       MEM_TEL
+		    )
+		    VALUES (
+		   	 #{proSn,jdbcType=NUMERIC}
+		    , #{pmemId,jdbcType=VARCHAR}
+		    , #{memEmail,jdbcType=VARCHAR}
+		    , #{memTel,jdbcType=VARCHAR}
+		    )
+		SELECT * FROM DUAL
+	</insert>
+	
+	<insert id="insertMemberListAdd" parameterType="kr.co.jobara.pms.project.vo.ProMemberVO">
+		MERGE INTO MEMBER
+		USING DUAL
+		ON(PRO_SN = #{proSn} AND PMEM_ID = #{pmemId})
+		WHEN MATCHED THEN
+		    UPDATE SET MEM_EMAIL = (SELECT PMEM_EMAIL FROM P_MEMBER WHERE PMEM_ID = #{pmemId})
+		WHEN NOT MATCHED THEN
+		    INSERT (PRO_SN, PMEM_ID, MEM_EMAIL, MEM_TEL)
+		    VALUES(#{proSn}, #{pmemId}, (SELECT PMEM_EMAIL FROM P_MEMBER WHERE PMEM_ID = #{pmemId}), (SELECT PMEM_TEL FROM P_MEMBER WHERE PMEM_ID = #{pmemId}))
+	</insert>
+	
+	
+	
+	
+	
+</mapper>

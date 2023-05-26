@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.incumbent.dao.IncumbentDAO">
+	<sql id="searchFrag">
+       	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+       		<choose>
+       			<when test="simpleSearch.searchType eq 'name'">
+       				AND INSTR(PMEM_NM, #{simpleSearch.searchWord}) > 0
+       			</when>
+       		</choose>
+       	</if>
+	</sql>
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM EMP_INFO
+		WHERE EMEM_ID = #{detailSearch.ememId}
+		<include refid="searchFrag" />
+	</select>
+	
+	<select id="selectIncumbentList" parameterType="PagingVO" resultType="IncumbentVO">
+		WITH INCUMORDER AS (
+		    SELECT A.EMP_SN, 
+		           A.PMEM_ID, 
+		           A.EMP_STATE_CD, 
+		           A.EMEM_ID, 
+		           B.PMEM_NM, 
+		           B.PMEM_EMAIL,
+		           B.PMEM_TEL,
+		           D.COMM_NM EMP_POSI_CD,
+		           E.COMM_NM EMP_DEPT_CD,
+		           MONTHS_BETWEEN(TRUNC(SYSDATE,'YEAR'),
+		                TRUNC(TO_DATE(B.PMEM_BIR),'YEAR')) /12 +1 MAN_YEAR,
+		           C.COMM_NM PMEM_SEX,
+		           A.EMP_STARTD
+		    FROM EMP_INFO A , P_MEMBER B, COMMON_MIDDLE C, COMMON_MIDDLE D, COMMON_MIDDLE E
+		    WHERE A.PMEM_ID = B.PMEM_ID
+		    AND B.PMEM_SEX = C.COMM_CD
+		    AND A.EMP_POSI_CD = D.COMM_CD
+		    AND A.EMP_DEPT_CD = E.COMM_CD
+		    AND A.EMEM_ID = #{detailSearch.ememId}
+		    <include refid="searchFrag" />
+<!-- 		    ORDER BY A.EMP_SN -->
+		)
+		SELECT A.*
+		FROM(
+		    SELECT INCUMORDER.*, ROWNUM RNUM
+		    FROM INCUMORDER
+		    ORDER BY RNUM DESC
+		) A
+		<![CDATA[
+			WHERE RNUM >= #{startRow} AND RNUM <= #{endRow}
+		]]>
+	</select>
+	
+	<select id="selectIncumbent" parameterType="int" resultType="IncumbentVO">
+		SELECT A.EMP_SN, 
+	           A.PMEM_ID, 
+	           A.EMP_STATE_CD, 
+	           A.EMEM_ID, 
+	           B.PMEM_NM, 
+	           D.COMM_NM EMP_POSI_CD,
+	           E.COMM_NM EMP_DEPT_CD,
+	           MONTHS_BETWEEN(TRUNC(SYSDATE,'YEAR'),
+	                TRUNC(TO_DATE(B.PMEM_BIR),'YEAR')) /12 +1 MAN_YEAR,
+	           C.COMM_NM PMEM_SEX,
+	           A.EMP_STARTD,
+	           A.EMP_SALARY
+	    FROM EMP_INFO A , P_MEMBER B, COMMON_MIDDLE C, COMMON_MIDDLE D, COMMON_MIDDLE E
+	    WHERE A.PMEM_ID = B.PMEM_ID
+	    AND B.PMEM_SEX = C.COMM_CD
+	    AND A.EMP_POSI_CD = D.COMM_CD
+	    AND A.EMP_DEPT_CD = E.COMM_CD
+	    AND A.EMP_SN = #{empSn}
+	</select>
+	
+	<update id="updateIncumbent" parameterType="IncumbentVO">
+		UPDATE EMP_INFO
+		SET
+			EMP_POSI_CD = #{empPosiCd,jdbcType=VARCHAR}
+			, EMP_DEPT_CD = #{empDeptCd,jdbcType=VARCHAR}
+			, EMP_SALARY = #{empSalary,jdbcType=VARCHAR}
+		WHERE EMP_SN = #{empSn}
+	</update>
+	
+	<delete id="deleteIncumbent" parameterType="IncumbentVO">
+		DELETE
+		FROM EMP_INFO
+		WHERE EMP_SN = #{empSn}
+	</delete>
+	
+</mapper>

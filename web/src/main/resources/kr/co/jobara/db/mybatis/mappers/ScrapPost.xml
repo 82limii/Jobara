@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.scrap.dao.ScrapPostDAO">
+	
+	
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM SCRAP
+		WHERE PMEM_ID = #{pmemId}
+	</select>
+	
+	<select id="selectScrapPostList" parameterType="PagingVO" resultType="ScrapPostVO">
+		WITH SCRAPORDER AS (
+			SELECT 			
+			    A.SCRAP_DATE
+			    , A.SCRAP_SN
+			    , A.JOB_SN
+			    , A.PROB_SN
+			    , A.PMEM_ID
+			    , B.PROB_TITLE
+			    , B.PROB_ENDD
+			    , C.JOB_TITLE
+			    , C.JOB_ENDD
+			    , (SELECT D.EMEM_NM FROM E_MEMBER D WHERE C.EMEM_ID = D.EMEM_ID)EMEM_NMJ
+			    , (SELECT D.EMEM_NM FROM E_MEMBER D WHERE B.EMEM_ID = D.EMEM_ID)EMEM_NMP
+			FROM SCRAP A
+				LEFT OUTER JOIN PRO_BOARD B
+					ON A.PROB_SN = B.PROB_SN
+				LEFT OUTER JOIN JOB_BOARD C
+					ON A.JOB_SN = C.JOB_SN
+			WHERE	
+				A.PMEM_ID = #{pmemId, jdbcType=VARCHAR}
+			AND
+			    A.JOB_SN IS NOT NULL
+			OR 
+			    A.PROB_SN IS NOT NULL
+			)
+			
+			SELECT A.*
+			FROM(
+				SELECT SCRAPORDER.*, ROWNUM RNUM
+				FROM SCRAPORDER
+			) A
+	</select>
+	
+	
+	<insert id="insertScrapPost" parameterType="ScrapPostVO">
+	<selectKey resultType="int" keyProperty="scrapSn" order="BEFORE">
+		SELECT SEQ_SCRAP.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO SCRAP (
+			SCRAP_SN
+			, PMEM_ID
+			<if test="probSn neq null and probSn gt 0">
+			, PROB_SN		    
+		    </if>
+			<if test="searchSn neq null and searchSn gt 0">
+			, SEARCH_SN					    
+		    </if>
+			, SCRAP_DATE
+			<if test="jobSn neq null and jobSn gt 0">
+			, JOB_SN					    
+		    </if>
+			<if test="ememId neq null and ememId.length gt 0">
+			, EMEM_ID					    
+		    </if>
+		) VALUES (
+			#{scrapSn,jdbcType=NUMERIC}
+			, #{pmemId,jdbcType=VARCHAR}
+			<if test="probSn neq null and probSn gt 0">
+			, #{probSn,jdbcType=NUMERIC}			
+			</if>
+			<if test="searchSn neq null and searchSn gt 0">		
+			, #{searchSn,jdbcType=NUMERIC}
+			</if>
+			, TO_CHAR(SYSDATE,'YYYY-MM-DD')
+			<if test="jobSn neq null and jobSn gt 0">		
+			, #{jobSn,jdbcType=NUMERIC}
+			</if>
+			<if test="ememId neq null and ememId.length gt 0">		
+			, #{ememId,jdbcType=VARCHAR}
+			</if>
+		)
+	</insert>
+	
+
+	<delete id="deleteScrapPost" parameterType="ScrapPostVO">
+			DELETE 
+			FROM 
+				SCRAP
+			WHERE
+			    scrap_sn = #{scrapSn,jdbcType=NUMERIC}
+	</delete>
+	
+<!-- ScrapCompany.xml 	 -->
+	
+	<select id="selectScrapCompanyList" parameterType="PagingVO" resultType="ScrapPostVO">
+		WITH SCRAPORDER AS (
+			SELECT
+			    A.SCRAP_SN
+			    , A.SCRAP_DATE
+			    , A.EMEM_ID
+			    , B.EMEM_NM
+			    , B.EMEM_EMAIL
+			FROM SCRAP A
+			    LEFT OUTER JOIN E_MEMBER B
+								ON A.EMEM_ID = B.EMEM_ID
+			WHERE
+			    A.PMEM_ID = #{pmemId, jdbcType=VARCHAR}
+			AND 
+			    A.EMEM_ID IS NOT NULL
+						)
+						
+						SELECT A.*
+						FROM(
+							SELECT SCRAPORDER.*, ROWNUM RNUM
+							FROM SCRAPORDER
+						) A
+	</select>
+</mapper>

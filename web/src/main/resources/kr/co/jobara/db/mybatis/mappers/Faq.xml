@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.faq.dao.FaqDAO">
+
+	<sql id="searchFrag">
+        <where>
+        	<if test="simpleSearch neq null and @org.apache.commons.lang3.StringUtils@isNotBlank(simpleSearch.searchWord)">
+        		<choose>
+        			<when test="simpleSearch.searchType eq 'title'">
+        				INSTR(FAQ_TITLE, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<when test="simpleSearch.searchType eq 'content'">
+        				INSTR(FAQ_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</when>
+        			<otherwise>
+       					INSTR(FAQ_TITLE, #{simpleSearch.searchWord}) > 0
+       					OR INSTR(FAQ_CONTENTS, #{simpleSearch.searchWord}) > 0
+        			</otherwise>
+        		</choose>
+        	</if>
+        </where>
+	</sql>
+
+	<select id="selectTotalRecord" resultType="int" parameterType="PagingVO" >
+		SELECT COUNT(*)
+		FROM FAQ
+		<include refid="searchFrag" />
+	</select>
+
+	<select id="selectFaqList" parameterType="PagingVO" resultType="FaqVO">
+		WITH FAQORDER AS (
+			SELECT FAQ_SN, FAQ_TITLE, FAQ_REQ, FAQ_CONTENTS, A.COMM_NM COMB_SN_NM                         
+			FROM FAQ LEFT OUTER JOIN COMMON_MIDDLE A ON (FAQ.COMB_SN = A.COMM_CD)
+			<include refid="searchFrag" />
+			ORDER BY FAQ_SN
+		)
+		SELECT A.*
+		FROM(
+			SELECT FAQORDER.*, ROWNUM RNUM
+			FROM FAQORDER
+			ORDER BY RNUM DESC
+		) A
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectFaq" parameterType="int" resultType="FaqVO">
+		SELECT
+		    FAQ_SN,		    ADMIN_ID,		    FAQ_TITLE,
+		    FAQ_CONTENTS,		    FAQ_REQ,
+		    COMB_SN,		    FAQ_DATE
+		FROM FAQ
+		WHERE FAQ_SN=#{faqSn}
+	</select>
+	
+	<insert id="insertFaq" parameterType="FaqVO">
+	<selectKey resultType="int" keyProperty="faqSn" order="BEFORE">
+		SELECT SEQ_FAQ.NEXTVAL
+		FROM DUAL
+	</selectKey>
+		INSERT INTO FAQ (
+		    FAQ_SN,		    ADMIN_ID,		    FAQ_TITLE,
+		    FAQ_CONTENTS,		    FAQ_REQ,		    COMB_SN,
+		    FAQ_DATE, FAQ_EDIT
+		) VALUES (
+		    #{faqSn,jdbcType=NUMERIC}
+			, 'ajava'
+			, #{faqTitle,jdbcType=VARCHAR}
+			, #{faqContents,jdbcType=CLOB}
+			, #{faqReq,jdbcType=CLOB}
+			, #{combSn,jdbcType=VARCHAR}
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+			, #{faqEdit,jdbcType=VARCHAR}
+		)
+	</insert>
+	
+	<update id="updateFaq" parameterType="FaqVO">
+		UPDATE FAQ
+		SET
+			FAQ_TITLE = #{faqTitle,jdbcType=VARCHAR}
+			, FAQ_CONTENTS = #{faqContents,jdbcType=CLOB}
+			, FAQ_REQ = #{faqReq,jdbcType=CLOB}
+			, COMB_SN = #{combSn,jdbcType=VARCHAR}
+		WHERE FAQ_SN = #{faqSn}
+	</update>
+	
+	<delete id="deleteFaq" parameterType="FaqVO" >
+		DELETE
+		FROM FAQ
+		WHERE FAQ_SN = #{faqSn}
+	</delete>
+
+</mapper>

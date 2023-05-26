@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.resume.dao.ResumeDAO">
+	<!-- 목록 조회 -->
+	<select id="selectTotalRecord" parameterType="PagingVO" resultType="int">
+		SELECT COUNT(*)
+		FROM RESUME
+	</select>
+	
+	<select id="selectResumeList" parameterType="PagingVO" resultType="ResumeVO">
+		WITH RESUMEORDER AS (
+			SELECT 
+				RE_SN
+				, RE_TITLE
+				, RE_STACK
+				, RE_INT
+				, RE_DATE
+				, PHOTO_URL
+				, RE_DEL
+			FROM RESUME A, P_MEMBER B
+			WHERE
+				A.PMEM_ID = B.PMEM_ID
+			AND
+				A.PMEM_ID = #{pmemId, jdbcType=VARCHAR}
+			AND
+				RE_DEL IS NULL
+			ORDER BY 1 DESC
+		)
+		SELECT A.*
+		FROM(
+			SELECT RESUMEORDER.*, ROWNUM RNUM
+			FROM RESUMEORDER
+		) A
+	</select>
+	
+	
+	<!-- 상세조회 -->
+	<select id="selectResume" parameterType="int" resultType="ResumeVO">
+		SELECT
+		    RE_SN, PMEM_ID, RE_TITLE,
+		    RE_STACK, RE_INT, RE_DATE,
+		    PHOTO_URL
+		FROM
+		    RESUME
+		WHERE
+		    RE_SN = #{reSn}
+	</select>
+	
+	<select id="selectMember" parameterType="int" resultType="PmemberVO">
+		SELECT PMEM_NM, PMEM_BIR, PMEM_TEL,
+		    PMEM_ZIP, PMEM_BADD, PMEM_DADD,
+		    PMEM_EMAIL, PMEM_SEX, C.COMM_NM PMEM_SEX_NM,
+		    PMEM_PIC
+		FROM P_MEMBER A 
+		    LEFT OUTER JOIN RESUME B ON (A.PMEM_ID = B.PMEM_ID)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (A.PMEM_SEX = C.COMM_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectEducationList" parameterType="int" resultType="EducationVO">
+		SELECT EDU_SN, RE_SN, EDI_SN,
+		    EDU_NAME, EDU_MAJOR, EDU_SDATE,
+		    EDU_EDATE, EDU_STATE, EDU_SCORE,
+		    ATT_SN, EDU_ENTER,
+		    B.COMM_NM EDI_NM, C.COMM_NM STATE_NM, D.COMM_NM ENTER_NM
+		FROM  EDUCATION A
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON (A.EDI_SN = B.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (A.EDU_STATE = C.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE D ON (A.EDU_ENTER = D.COMM_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectCareerList" parameterType="int" resultType="CareerVO">
+		SELECT CAR_SN, RE_SN, CAR_ENTER,
+		    CAR_DEPARTMENT, CAR_STARTD, CAR_DEPT_CD,
+		    CAR_POSI_CD, CAR_PAY, CAR_TASK,
+		    CAR_DESCRIPTION, CAR_ENDD,
+		    B.COMM_NM CAR_DEPT, C.COMM_NM CAR_POSI
+		FROM CAREER A
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON (A.CAR_DEPT_CD = B.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (A.CAR_POSI_CD = C.COMM_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectActivityList" parameterType="int" resultType="ActivityVO">
+		SELECT
+		    ACT_SN, RE_SN, ACT_COMB,
+		    ACT_NM, ACT_STARTD, ACT_ENDD,
+		    ACT_CONTENTS,
+		    B.COMM_NM ACT_DIV
+		FROM
+		    ACTIVITY A
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON (A.ACT_COMB = B.COMM_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectSchoolList" parameterType="int" resultType="SchoolVO">
+		SELECT
+		    SCH_SN, RE_SN, SCH_NM,
+		    SCH_INT, SCH_STARTD, SCH_ENDD,
+		    SCH_CONTENTS
+		FROM
+		    SCHOOL
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectCondi" parameterType="int" resultType="ConditionsVO">
+		SELECT
+		    CONDI_SN, RE_SN, CONDI_SHAPE,
+		    CONDI_PLACE, CONDI_DUTY,
+		    B.COMM_NM SHAPE_NM, C.COMM_NM DUTY_NM, LOC_CITY_NM||' '||LOC_NM PLACE_NM
+		FROM
+		    CONDITIONS A
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON (A.CONDI_SHAPE= B.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (A.CONDI_DUTY = C.COMM_CD)
+		    LEFT OUTER JOIN LOCATION D ON (A.CONDI_PLACE = D.LOC_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectLanguageList" parameterType="int" resultType="LanguageVO">
+		SELECT
+		    LANG_SN, RE_SN, LANG_DIVI_CD,
+		    LANG_NM, LANG_TEST, LANG_SCORE,
+		    LANG_DATE, LANG_CON_CD,
+		    B.COMM_NM DIV_NM, C.COMM_NM LANG_CON
+		FROM
+		    LANGUAGE A
+		    LEFT OUTER JOIN COMMON_MIDDLE B ON (A.LANG_DIVI_CD= B.COMM_CD)
+		    LEFT OUTER JOIN COMMON_MIDDLE C ON (A.LANG_CON_CD= C.COMM_CD)
+		WHERE RE_SN = #{reSn}
+	</select>
+	<select id="selectLicenseList" parameterType="int" resultType="LicenseVO">
+		SELECT
+		    LIC_SN, RE_SN, LIC_NM,
+		    LIC_INT, LIC_DATE
+		FROM
+		    LICENSE
+		WHERE RE_SN = #{reSn}
+	</select>
+	
+	<update id="deleteResume" parameterType="int">
+		UPDATE RESUME
+		    SET
+		        RE_DEL = TO_CHAR(SYSDATE, 'YYYY-MM-DD')
+		WHERE RE_SN = #{reSn}
+	</update>
+	
+</mapper>

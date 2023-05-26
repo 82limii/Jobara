@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.co.jobara.commons.dao.CommonCodeDAO">
+	<select id="selectCodeList" resultType="CommonCodeVO">
+		SELECT A.COMB_CD, A.COMB_NM
+		    , B.COMM_CD, B.COMM_NM
+		    , C.COMS_CD, C.COMS_NM
+		FROM COMMON_SMALL C
+		    FULL OUTER JOIN COMMON_MIDDLE B ON (C.COMM_CD = B.COMM_CD)
+		    LEFT OUTER JOIN COMMON_BIG A ON (A.COMB_CD = B.COMB_CD)
+		ORDER BY A.COMB_CD, B.COMM_CD, C.COMS_CD
+	</select>
+	
+	<select id="selectBigCodeList" resultType="CommonCodeVO">
+		SELECT COMB_CD, COMB_NM
+		FROM COMMON_BIG
+	</select>
+	
+	<select id="selectMiddleCodeList" parameterType="string" resultType="CommonCodeVO">
+		SELECT A.COMB_CD, COMB_NM, COMM_CD, COMM_NM
+		FROM COMMON_MIDDLE A LEFT OUTER JOIN COMMON_BIG B ON (A.COMB_CD = B.COMB_CD)
+		WHERE A.COMB_CD LIKE #{combCd}||'%'
+		ORDER BY COMM_CD
+	</select>
+	
+	<select id="selectSmallCodeList" parameterType="string" resultType="CommonCodeVO">
+		SELECT A.COMM_CD, COMM_NM, COMS_CD, COMS_NM
+		FROM COMMON_SMALL A LEFT OUTER JOIN COMMON_MIDDLE B ON (A.COMM_CD = B.COMM_CD)
+		WHERE A.COMM_CD LIKE #{commCd}||'%'
+		ORDER BY COMM_CD, COMS_CD
+	</select>
+	
+	<select id="selectCityList" resultType="LocationVO">
+		SELECT LOC_CD, LOC_CITY_NM
+		FROM LOCATION
+		WHERE LENGTH(LOC_CD) = 2
+	</select>
+	<select id="selectLocationList" resultType="LocationVO">
+		SELECT LOC_CD, LOC_CITY_NM, LOC_NM
+		FROM LOCATION
+	</select>
+	<select id="selectLocation" resultType="LocationVO" parameterType="string">
+		SELECT LOC_CD, LOC_CITY_NM, LOC_NM
+		FROM LOCATION
+		WHERE LOC_CD LIKE #{locCd}||'%'
+	</select>
+</mapper>
